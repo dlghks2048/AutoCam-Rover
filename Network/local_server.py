@@ -17,11 +17,11 @@ import logging
 import threading
 import numpy as np
 import cv2
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-from flask import Flask, request, jsonify, Response, render_template_string, send_from_directory
+from flask import Flask, request, jsonify, Response, render_template_string
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)
@@ -37,11 +37,14 @@ MAX_CONTENT = 10 * 1024 * 1024
 # ── 프레임 데이터 클래스 ──────────────────────────────────────────────────────
 @dataclass
 class Frame:
-    data:      bytes                          # 원본 JPEG 바이트
-    filename:  str                            # 저장 파일명
-    timestamp: str                            # ISO 타임스탬프
-    shape:     dict                           # {"h": H, "w": W, "channels": C}
-    meta:      dict = field(default_factory=dict)   # 트리거 메타 (label 등)
+    data:           bytes
+    event_id:       int
+    filename:       str
+    captured_at:    str    # JetRover 촬영 시각
+    timestamp:      str    # 서버 수신 시각 (received_at)
+
+    event_type:     str
+    robot_location: dict   # {"x": float, "y": float}
 
 
 # ── FrameQueue ────────────────────────────────────────────────────────────────
@@ -121,14 +124,59 @@ def _gui_worker() -> None:
     while True:
         frame = gui_queue.get()
         if frame is None:
-            break
+            continue
         with _latest_lock:
             _latest_frame = frame.data
 
 
-# 인메모리 인덱스 — db_worker가 쓰고, /images/<filename>/info 가 읽음
-_image_index: dict[str, dict] = {}
-_image_index_lock = threading.Lock()
+# ── 순번 카운터 ───────────────────────────────────────────────────────────────
+_event_counter      = 0
+_event_counter_lock = threading.Lock()
+
+def _init_event_counter() -> None:
+    """서버 재시작 시 index.jsonl 의 마지막 event_id 를 읽어 이어받음."""
+    global _event_counter
+    index_path = SAVE_DIR / "index.jsonl"
+    if not index_path.exists():
+        return
+    last_id = 0
+    with index_path.open(encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                eid = int(json.loads(line).get("event_id", 0))
+                if eid > last_id:
+                    last_id = eid
+            except (json.JSONDecodeError, ValueError, TypeError):
+                pass
+    _event_counter = last_id
+    log.info("event_id 카운터 초기화: %d 에서 재개", _event_counter)
+
+def _next_event_id() -> int:
+    global _event_counter
+    with _event_counter_lock:
+        _event_counter += 1
+        return _event_counter
+
+
+# 가장 최근 저장 레코드 — 페이지 최초 로드 시 /latest 가 읽음
+_latest_record: dict = {}
+_latest_record_lock = threading.Lock()
+
+# SSE 클라이언트 큐 목록 — db_worker가 push, /events 가 consume
+_sse_clients: list[queue.Queue] = []
+_sse_lock = threading.Lock()
+
+def _sse_push(record: dict) -> None:
+    """저장 완료된 레코드를 연결된 모든 브라우저로 즉시 전송."""
+    with _sse_lock:
+        for q in list(_sse_clients):
+            try:
+                q.put_nowait(record)
+            except queue.Full:
+                pass  # 느린 클라이언트는 건너뜀
 
 
 # DB 워커 ───────────────────────────────────────────────────────────────────
@@ -137,22 +185,26 @@ def _db_worker() -> None:
     while True:
         frame = db_queue.get()
         if frame is None:
-            break
+            continue
         img_path   = SAVE_DIR / frame.filename
         index_path = SAVE_DIR / "index.jsonl"
         try:
             img_path.write_bytes(frame.data)
             record = {
-                "path":      str(img_path),
-                "timestamp": frame.timestamp,
-                "shape":     frame.shape,
-                "meta":      frame.meta,
+                "event_id":       frame.event_id,
+                "captured_at":    frame.captured_at,
+                "received_at":    frame.timestamp,
+                "robot_location": frame.robot_location,
+                "event_type":     frame.event_type,
+                "image_path":     str(img_path),
             }
             with index_path.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
-            with _image_index_lock:
-                _image_index[frame.filename] = record
-            log.info("[db] 저장: %s  %s", frame.filename, frame.shape)
+            with _latest_record_lock:
+                _latest_record.clear()
+                _latest_record.update(record)
+            _sse_push(record)
+            log.info("[db] 저장: %s", frame.filename)
         except OSError as exc:
             log.error("[db] 저장 실패: %s", exc)
 
@@ -161,6 +213,7 @@ def _db_worker() -> None:
 def start_workers() -> list[threading.Thread]:
     """두 워커 스레드를 데몬으로 시작. 메인 프로세스 종료 시 자동 정리됨."""
     SAVE_DIR.mkdir(parents=True, exist_ok=True)
+    _init_event_counter()
     workers = [
         threading.Thread(target=_gui_worker, name="gui-worker", daemon=True),
         threading.Thread(target=_db_worker,  name="db-worker",  daemon=True),
@@ -191,14 +244,12 @@ def build_response(status: str, **kwargs) -> dict:
 
 
 # ── 이미지 검증 ───────────────────────────────────────────────────────────────
-def validate_image(data: bytes) -> tuple[bool, dict]:
-    """cv2.imdecode() 로 실제 디코딩해 유효성 검사. 성공 시 shape 반환."""
+def validate_image(data: bytes) -> tuple[bool, str]:
+    """cv2.imdecode() 로 실제 디코딩해 유효성 검사."""
     nparr = np.frombuffer(data, dtype=np.uint8)
-    img   = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    if img is None:
-        return False, {"error": "cv2.imdecode() 실패 — 손상되거나 지원하지 않는 이미지 형식"}
-    h, w, c = img.shape
-    return True, {"h": h, "w": w, "channels": c}
+    if cv2.imdecode(nparr, cv2.IMREAD_COLOR) is None:
+        return False, "cv2.imdecode() 실패 — 손상되거나 지원하지 않는 이미지 형식"
+    return True, ""
 
 
 # ── Flask 앱 ──────────────────────────────────────────────────────────────────
@@ -212,18 +263,23 @@ _VIEWER_HTML = """<!DOCTYPE html>
   <meta charset="UTF-8">
   <title>JetRover 라이브 뷰</title>
   <style>
-    body  { background:#111; color:#eee; font-family:sans-serif;
-            display:flex; flex-direction:column; align-items:center; padding:20px; }
-    img   { max-width:100%; border:2px solid #444; border-radius:6px; }
-    h1    { margin-bottom:12px; }
-    .bar  { margin-top:14px; display:flex; gap:10px; align-items:center; }
-    input { padding:6px 10px; border-radius:4px; border:1px solid #555;
-            background:#222; color:#eee; width:200px; }
-    button{ padding:8px 18px; border-radius:4px; border:none;
-            background:#2563eb; color:#fff; cursor:pointer; font-size:1em; }
+    body     { background:#111; color:#eee; font-family:sans-serif;
+               display:flex; flex-direction:column; align-items:center; padding:20px; }
+    img      { max-width:100%; border:2px solid #444; border-radius:6px; }
+    h1       { margin-bottom:12px; }
+    .bar     { margin-top:14px; display:flex; gap:10px; align-items:center; }
+    input    { padding:6px 10px; border-radius:4px; border:1px solid #555;
+               background:#222; color:#eee; width:200px; }
+    button   { padding:8px 18px; border-radius:4px; border:none;
+               background:#2563eb; color:#fff; cursor:pointer; font-size:1em; }
     button:hover { background:#1d4ed8; }
-    #msg  { margin-top:8px; font-size:0.85em; color:#6ee7b7; min-height:1.2em; }
-    #stats{ margin-top:6px; font-size:0.8em; color:#888; }
+    #msg     { margin-top:8px; font-size:0.85em; color:#6ee7b7; min-height:1.2em; }
+    #stats   { margin-top:6px; font-size:0.8em; color:#888; }
+    #json-wrap{ margin-top:16px; width:100%; max-width:640px; }
+    #json-label{ font-size:0.78em; color:#6b7280; margin-bottom:4px; }
+    #json-out{ margin:0; padding:14px; background:#0d1117; border:1px solid #333;
+               border-radius:6px; font-size:0.8em; color:#a5f3fc;
+               white-space:pre; overflow-x:auto; min-height:48px; }
   </style>
 </head>
 <body>
@@ -234,8 +290,16 @@ _VIEWER_HTML = """<!DOCTYPE html>
     <button onclick="sendTrigger()">촬영 신호 전송</button>
   </div>
   <div id="msg"></div>
-  <div id="stats">서버: {{ host }}:{{ port }} | 저장: {{ save_dir }} | <a href="/gallery" style="color:#60a5fa">갤러리</a></div>
+  <div id="stats">서버: {{ host }}:{{ port }} | 저장: {{ save_dir }}</div>
+
+  <div id="json-wrap">
+    <div id="json-label">최근 촬영 JSON</div>
+    <pre id="json-out">대기 중...</pre>
+  </div>
+
   <script>
+    let lastEventId = null;
+
     function sendTrigger() {
       const label = document.getElementById('label').value.trim();
       const body  = label ? { label } : {};
@@ -247,123 +311,27 @@ _VIEWER_HTML = """<!DOCTYPE html>
       .then(r => r.json())
       .then(d => {
         document.getElementById('msg').textContent =
-          d.message + (d.label ? ` [${d.label}]` : '') + '  ' + d.timestamp;
+          d.message + (d.label ? ' [' + d.label + ']' : '') + '  ' + d.timestamp;
       })
       .catch(e => document.getElementById('msg').textContent = '오류: ' + e);
     }
-  </script>
-</body>
-</html>"""
 
+    // 페이지 최초 로드 시 마지막 레코드 한 번만 가져옴
+    fetch('/latest')
+      .then(r => r.json())
+      .then(d => {
+        if (d.record)
+          document.getElementById('json-out').textContent =
+            JSON.stringify(d.record, null, 2);
+      })
+      .catch(() => {});
 
-# ── 갤러리 HTML ───────────────────────────────────────────────────────────────
-_GALLERY_HTML = """<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>JetRover 갤러리</title>
-  <style>
-    body      { background:#111; color:#eee; font-family:sans-serif; padding:20px; }
-    h1        { text-align:center; margin-bottom:6px; }
-    .bar      { display:flex; justify-content:center; gap:12px; align-items:center; margin-bottom:18px; }
-    button    { padding:5px 12px; border-radius:4px; border:none; background:#2563eb; color:#fff; cursor:pointer; font-size:.82em; }
-    button:hover  { background:#1d4ed8; }
-    button.json-btn { background:#374151; }
-    button.json-btn:hover { background:#4b5563; }
-    label     { font-size:0.9em; cursor:pointer; }
-    #count    { font-size:0.85em; color:#888; }
-    .grid     { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
-    .card     { background:#1e1e1e; border-radius:8px; overflow:hidden; border:1px solid #333; }
-    .card a img { width:100%; display:block; aspect-ratio:4/3; object-fit:cover; transition:opacity .15s; }
-    .card a img:hover { opacity:.85; }
-    .info     { padding:8px 10px; font-size:0.78em; }
-    .lbl      { color:#6ee7b7; font-weight:bold; margin-bottom:3px; }
-    .ts       { color:#888; }
-    .shape    { color:#555; margin-top:2px; }
-    .actions  { margin-top:6px; display:flex; gap:6px; }
-    .json-box { display:none; margin:0; padding:8px; background:#0d1117;
-                border-top:1px solid #333; font-size:.72em; color:#a5f3fc;
-                overflow-x:auto; white-space:pre; }
-    .empty    { text-align:center; color:#555; margin-top:80px; font-size:1.1em; }
-  </style>
-</head>
-<body>
-  <h1>갤러리</h1>
-  <div class="bar">
-    <a href="/" style="color:#60a5fa;font-size:.9em">← 라이브 뷰</a>
-    <button onclick="load()">새로고침</button>
-    <label><input type="checkbox" id="auto" onchange="toggleAuto()"> 자동 새로고침 (5초)</label>
-    <span id="count"></span>
-  </div>
-  <div class="grid" id="grid"></div>
-
-  <script>
-    let timer = null;
-
-    function load() {
-      fetch('/images')
-        .then(r => r.json())
-        .then(d => {
-          const records = [...d.records].reverse();
-          document.getElementById('count').textContent = '총 ' + d.total + '장';
-          const grid = document.getElementById('grid');
-          if (!records.length) {
-            grid.innerHTML = '<div class="empty">저장된 이미지가 없습니다</div>';
-            return;
-          }
-          grid.innerHTML = records.map(r => {
-            const fname = r.filename;
-            const sid   = fname.replace('.', '-');   // ID에 점 제거
-            const label = r.meta && r.meta.label ? r.meta.label : '';
-            const shape = r.shape ? r.shape.w + '×' + r.shape.h : '';
-            return '<div class="card">'
-              + '<a href="/images/' + fname + '" target="_blank">'
-              + '<img src="/images/' + fname + '" loading="lazy" alt="' + fname + '">'
-              + '</a>'
-              + '<div class="info">'
-              + (label ? '<div class="lbl">' + label + '</div>' : '')
-              + '<div class="ts">'    + (r.timestamp || '') + '</div>'
-              + '<div class="shape">' + shape + '</div>'
-              + '<div class="actions">'
-              + '<button class="json-btn" onclick="toggleJson(\'' + fname + '\',\'' + sid + '\')">JSON 보기</button>'
-              + '</div>'
-              + '</div>'
-              + '<pre class="json-box" id="jb-' + sid + '"></pre>'
-              + '</div>';
-          }).join('');
-        })
-        .catch(e => console.error(e));
-    }
-
-    function toggleJson(fname, sid) {
-      const box = document.getElementById('jb-' + sid);
-      if (box.style.display === 'block') {
-        box.style.display = 'none';
-        return;
-      }
-      if (box.textContent) {
-        box.style.display = 'block';
-        return;
-      }
-      fetch('/images/' + fname + '/info')
-        .then(r => r.json())
-        .then(d => {
-          box.textContent = JSON.stringify(d.record, null, 2);
-          box.style.display = 'block';
-        })
-        .catch(e => { box.textContent = '오류: ' + e; box.style.display = 'block'; });
-    }
-
-    function toggleAuto() {
-      if (document.getElementById('auto').checked) {
-        timer = setInterval(load, 5000);
-      } else {
-        clearInterval(timer);
-        timer = null;
-      }
-    }
-
-    load();
+    // 이후 갱신은 서버 푸시(SSE)로만 수행
+    const es = new EventSource('/events');
+    es.onmessage = function(e) {
+      document.getElementById('json-out').textContent =
+        JSON.stringify(JSON.parse(e.data), null, 2);
+    };
   </script>
 </body>
 </html>"""
@@ -395,30 +363,42 @@ def upload():
     if not data:
         return jsonify(build_response("error", error="빈 파일")), 400
 
-    valid, img_meta = validate_image(data)
+    valid, err = validate_image(data)
     if not valid:
-        log.warning("이미지 검증 실패: %s", img_meta["error"])
-        return jsonify(build_response("error", **img_meta)), 422
+        log.warning("이미지 검증 실패: %s", err)
+        return jsonify(build_response("error", error=err)), 422
 
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    with _trigger_lock:
-        meta = dict(_trigger_meta)
+    received_at = datetime.now().isoformat(timespec="milliseconds")
+    ts          = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+
+    captured_at = request.form.get("captured_at") or received_at
+    event_type  = request.form.get("event_type") or "motion"   # 기본값: motion
+    try:
+        loc_x = float(request.form.get("location_x", 0))
+        loc_y = float(request.form.get("location_y", 0))
+    except ValueError:
+        loc_x, loc_y = 0.0, 0.0                               # 기본값: 0, 0
 
     frame = Frame(
         data=data,
+        event_id=_next_event_id(),
         filename=f"{ts}.jpg",
-        timestamp=datetime.now().isoformat(timespec="milliseconds"),
-        shape=img_meta,
-        meta=meta,
+        captured_at=captured_at,
+        timestamp=received_at,
+        event_type=event_type,
+        robot_location={"x": loc_x, "y": loc_y},
     )
     dispatch(frame)
 
     return jsonify(
         build_response("ok",
-            file=frame.filename,
-            bytes=len(data),
-            image=img_meta,
-            queued={q.name: q.qsize for q in _ALL_QUEUES},  # 각 큐 현재 대기 수
+            event_id=frame.event_id,
+            image_path=str(SAVE_DIR / frame.filename),
+            captured_at=frame.captured_at,
+            received_at=received_at,
+            event_type=frame.event_type,
+            robot_location=frame.robot_location,
+            queued={q.name: q.qsize for q in _ALL_QUEUES},
         )
     ), 200
 
@@ -473,47 +453,42 @@ def stream():
     return Response(_mjpeg_generator(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
-@app.route("/gallery")
-def gallery():
-    """저장된 이미지를 격자로 보여주는 HTML 갤러리."""
-    return render_template_string(_GALLERY_HTML)
-
-
-@app.route("/images")
-def list_images():
-    """index.jsonl 의 모든 레코드를 JSON 배열로 반환. filename 필드를 함께 제공."""
-    index_path = SAVE_DIR / "index.jsonl"
-    if not index_path.exists():
-        return jsonify(build_response("ok", records=[], total=0)), 200
-    records = []
-    with index_path.open(encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                rec = json.loads(line)
-                rec["filename"] = Path(rec["path"]).name
-                records.append(rec)
-            except (json.JSONDecodeError, KeyError):
-                pass
-    return jsonify(build_response("ok", records=records, total=len(records))), 200
-
-
-@app.route("/images/<filename>/info")
-def image_info(filename: str):
-    """촬영 직후 인메모리 인덱스에서 JSON 레코드를 즉시 반환."""
-    with _image_index_lock:
-        record = _image_index.get(filename)
-    if record is None:
-        return jsonify(build_response("error", error="레코드 없음")), 404
+@app.route("/latest")
+def latest():
+    """페이지 최초 로드 시 사용 — 가장 마지막 저장 레코드를 반환."""
+    with _latest_record_lock:
+        record = dict(_latest_record)
+    if not record:
+        return jsonify(build_response("ok", record=None)), 200
     return jsonify(build_response("ok", record=record)), 200
 
 
-@app.route("/images/<filename>")
-def serve_image(filename: str):
-    """저장된 이미지 파일을 직접 제공."""
-    return send_from_directory(SAVE_DIR.resolve(), filename)
+def _sse_generator(q: queue.Queue):
+    """이미지 저장 완료 시 레코드를 SSE 형식으로 스트리밍."""
+    try:
+        while True:
+            try:
+                record = q.get(timeout=25)
+                yield f"data: {json.dumps(record, ensure_ascii=False)}\n\n"
+            except queue.Empty:
+                yield ": heartbeat\n\n"   # 연결 유지용 주석 이벤트
+    finally:
+        with _sse_lock:
+            if q in _sse_clients:
+                _sse_clients.remove(q)
+
+
+@app.route("/events")
+def events():
+    """브라우저와 SSE 연결을 유지하며 새 이미지 저장 시 즉시 푸시."""
+    q: queue.Queue = queue.Queue(maxsize=10)
+    with _sse_lock:
+        _sse_clients.append(q)
+    return Response(
+        _sse_generator(q),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.route("/status")

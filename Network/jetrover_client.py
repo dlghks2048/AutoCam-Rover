@@ -11,6 +11,7 @@ import requests
 import argparse
 import logging
 from datetime import datetime
+from typing import Tuple
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,7 +23,7 @@ log = logging.getLogger(__name__)
 # ── 설정 ──────────────────────────────────────────────────────────────────────
 DEFAULT_SERVER   = "http://192.168.0.10:5000"   # 로컬 서버 IP로 변경
 JPEG_QUALITY     = 80       # JPEG 압축 품질 (0-100)
-POLL_INTERVAL    = 0.5      # 트리거 폴링 간격(초)
+POLL_INTERVAL    = 1      # 트리거 폴링 간격(초)
 RECONNECT_DELAY  = 3        # 서버 연결 실패 시 재시도 간격(초)
 REQUEST_TIMEOUT  = 5        # 요청 타임아웃(초)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -85,7 +86,7 @@ def camera_reader(cap: cv2.VideoCapture):
 
 # ── 네트워크 ──────────────────────────────────────────────────────────────────
 
-def poll_trigger(session: requests.Session, trigger_url: str) -> tuple[bool, dict]:
+def poll_trigger(session: requests.Session, trigger_url: str) -> Tuple[bool, dict]:
     """
     GET /trigger 를 호출해 촬영 신호 여부 반환.
     반환: (triggered 여부, 응답 JSON 전체)
@@ -119,17 +120,29 @@ def upload_frame(session: requests.Session, upload_url: str, jpeg_bytes: bytes, 
     인코딩된 프레임을 서버에 업로드.
     meta 에는 트리거 응답의 부가 정보(label 등)가 담겨 있음.
     """
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    files = {"image": (f"{timestamp}.jpg", jpeg_bytes, "image/jpeg")}
+    captured_at = datetime.now().isoformat(timespec="milliseconds")
+    timestamp   = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    loc = meta.get("robot_location", {})
+    files     = {"image": (f"{timestamp}.jpg", jpeg_bytes, "image/jpeg")}
+    form_data = {
+        "captured_at": captured_at,
+        "event_type":  meta.get("event_type") or "motion",
+        "location_x":  str(loc.get("x", 0)),
+        "location_y":  str(loc.get("y", 0)),
+    }
     try:
-        resp = session.post(upload_url, files=files, timeout=REQUEST_TIMEOUT)
+        resp = session.post(upload_url, files=files, data=form_data, timeout=REQUEST_TIMEOUT)
         if resp.status_code == 200:
-            result = resp.json()
+            r = resp.json()
+            loc = r.get("robot_location", {})
             log.info(
-                "업로드 완료 → %s  %s  label=%r",
-                result.get("file", "?"),
-                result.get("image", {}),
-                meta.get("label", ""),
+                "[#%s] event_type=%s  location=(%s, %s)  captured=%s  path=%s",
+                r.get("event_id",    "?"),
+                r.get("event_type",  "?"),
+                loc.get("x", 0),
+                loc.get("y", 0),
+                r.get("captured_at", "?"),
+                r.get("image_path",  "?"),
             )
             return True
         log.warning("업로드 응답 코드: %d  body=%s", resp.status_code, resp.text[:200])

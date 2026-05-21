@@ -1,0 +1,27 @@
+SQLite DB 생성
+
+[ EVENT_LOG TABLE ]
+CREATE TABLE event_logs (
+    event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    captured_at TEXT NOT NULL,
+    received_at TEXT,
+    robot_location TEXT,
+    event_type TEXT,
+    image_path TEXT NOT NULL,
+    analysis_status TEXT DEFAULT 'pending',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+[ analysis_results table ]
+CREATE TABLE analysis_results (
+    analysis_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id INTEGER NOT NULL,
+    person_detected INTEGER DEFAULT 0,
+    fallen_object_detected INTEGER DEFAULT 0,
+    obstacle_detected INTEGER DEFAULT 0,
+    motion_detected INTEGER DEFAULT 0,
+    risk_level TEXT,
+    result_summary TEXT,
+    analyzed_at TEXT,
+    FOREIGN KEY (event_id) REFERENCES event_logs(event_id)
+);

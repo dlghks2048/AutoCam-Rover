@@ -14,12 +14,10 @@ def generate_launch_description():
           'use_sim_time':use_sim_time,
           'subscribe_rgbd':True,
           'subscribe_scan':True,
-          'publish_tf':False,
           'use_action_for_goal':True,
           'qos_scan':qos,
           'qos_image':qos,
           'qos_imu':qos,
-          'queue_size':100,
           # RTAB-Map's parameters should be strings:
           'Reg/Strategy':'1',
           'Reg/Force3DoF':'true',

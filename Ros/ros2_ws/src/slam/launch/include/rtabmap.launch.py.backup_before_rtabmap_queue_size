@@ -19,7 +19,6 @@ def generate_launch_description():
           'qos_scan':qos,
           'qos_image':qos,
           'qos_imu':qos,
-          'queue_size':100,
           # RTAB-Map's parameters should be strings:
           'Reg/Strategy':'1',
           'Reg/Force3DoF':'true',

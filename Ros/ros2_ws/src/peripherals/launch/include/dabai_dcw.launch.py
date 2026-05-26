@@ -33,7 +33,7 @@ def launch_setup(context):
             DeclareLaunchArgument('depth_width', default_value='640'),
             DeclareLaunchArgument('depth_height', default_value='360'),
             DeclareLaunchArgument('depth_fps', default_value='30'),
-            DeclareLaunchArgument('depth_format', default_value='Y11'),
+            DeclareLaunchArgument('depth_format', default_value='Y12'),
             DeclareLaunchArgument('enable_depth', default_value='true'),
             DeclareLaunchArgument('flip_depth', default_value='false'),
             DeclareLaunchArgument('depth_qos', default_value='default'),

@@ -29,7 +29,7 @@ def launch_setup(context):
     depth_camera_info = '{}/depth_cam/color/camera_info'.format(topic_prefix)
     rgb_camera_topic = '{}/depth_cam/color/image_raw'.format(topic_prefix)
     odom_topic = '{}/odom'.format(topic_prefix)
-    scan_topic = '/scan_fixed'
+    scan_topic = '{}/scan'.format(topic_prefix)
 
     if compiled == 'True':
         slam_package_path = get_package_share_directory('slam')
@@ -55,7 +55,7 @@ def launch_setup(context):
             'map_frame': map_frame,
             'odom_frame': odom_frame,
             'base_frame': base_frame,
-            'scan_topic': '/scan_fixed',
+            'scan_topic': '{}/scan'.format(frame_prefix),
         }.items(),
     )
 

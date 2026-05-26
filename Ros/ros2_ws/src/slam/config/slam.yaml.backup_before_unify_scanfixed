@@ -13,7 +13,7 @@
     odom_frame: odom
     map_frame: map
     base_frame: base_footprint
-    scan_topic: /scan_fixed
+    scan_topic: scan
     use_map_saver: true
     mode: mapping  #localization
 

@@ -54,7 +54,7 @@ def generate_launch_description():
         # Nodes to launch
         Node(
             package='rtabmap_sync', executable='rgbd_sync', output='screen',
-            parameters=[{'approx_sync':True, 'approx_sync_max_interval': 0.01, 'queue_size':100, 'use_sim_time':use_sim_time, 'qos':qos}],
+            parameters=[{'approx_sync':True, 'approx_sync_max_interval': 0.2, 'queue_size':100, 'use_sim_time':use_sim_time, 'qos':qos}],
             remappings=remappings),
 
         # SLAM Mode:

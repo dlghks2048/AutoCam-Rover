@@ -289,8 +289,8 @@ Visualization Manager:
       Cloud voxel size (m): 0.009999999776482582
       Color: 255; 255; 255
       Color Transformer: RGB8
-      Download graph: false
-      Download map: false
+      Download graph: true
+      Download map: true
       Download namespace: rtabmap
       Enabled: true
       Filter ceiling (m): 0

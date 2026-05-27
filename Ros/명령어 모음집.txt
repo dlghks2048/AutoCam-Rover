@@ -1,0 +1,1 @@
+cd ~/ros2_ws/src/slam/maps && ros2 run nav2_map_server map_saver_cli -f map_01 --ros-args -p map_subscribe_transient_local:=true

@@ -1,1 +1,6 @@
 cd ~/ros2_ws/src/slam/maps && ros2 run nav2_map_server map_saver_cli -f map_01 --ros-args -p map_subscribe_transient_local:=true
+- 2D 라이더 맵 저장 명령어
+
+ros2 service call /publish_map rtabmap_msgs/srv/PublishMap "{global_map: true, optimized: true, graph_only: false}"
+- 3D 매핑 재발행하는 명령어.
+

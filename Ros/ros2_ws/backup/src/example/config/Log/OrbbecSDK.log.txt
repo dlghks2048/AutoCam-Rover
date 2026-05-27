@@ -1,0 +1,423 @@
+[05/20 10:18:57.863439][debug][3391][Context.cpp:30] Context creating, work_dir=/home/ubuntu/ros2_ws/src/example/config
+[05/20 10:18:57.863537][debug][3391][Context.cpp:49] Config file version=1.1
+[05/20 10:18:57.863585][debug][3391][FrameBufferManager.cpp:23] Max global frame buffer size updated! size=2048.000MB
+[05/20 10:18:57.863613][info][3391][Context.cpp:68] Context created with config: /home/ubuntu/third_party_ros2/third_party_ws/install/orbbec_camera/share/orbbec_camera/config/OrbbecSDKConfig_v1.0.xml
+[05/20 10:18:57.863676][info][3391][Context.cpp:73] Work directory=/home/ubuntu/ros2_ws/src/example/config, SDK version=v1.10.5-20240511-7dc8be9
+[05/20 10:18:57.863711][debug][3391][DeviceManager.cpp:30] DeviceManager init ...
+[05/20 10:18:57.863724][info][3391][LinuxPal.cpp:31] createObPal: create LinuxPal!
+[05/20 10:18:57.865784][debug][3391][DeviceManager.cpp:34] Enable USB Device Enumerator ...
+[05/20 10:18:57.935434][debug][3391][EnumeratorLibusb.cpp:322] queryDevicesInfo done!
+[05/20 10:18:57.935495][debug][3391][UsbDeviceEnumerator.cpp:160] Current usb device port list:
+[05/20 10:18:57.935524][debug][3391][UsbDeviceEnumerator.cpp:163]  - 1-2.3.1-9.0 | Orbbec(R) Astra(TM) 3D Camera(F) Depth
+[05/20 10:18:57.935539][debug][3391][UsbDeviceEnumerator.cpp:163]  - 1-2.3.3-8.0 | Orbbec DaBai DCW RGB Camera
+[05/20 10:18:57.935683][warning][3391][OpenNIDeviceInfo.cpp:186] New openni device matched.
+[05/20 10:18:57.935888][info][3391][LinuxPal.cpp:142] Create PollingDeviceWatcher!
+[05/20 10:18:57.935936][debug][3391][UsbDeviceEnumerator.cpp:68] Found 1 device(s):
+[05/20 10:18:57.935954][debug][3391][UsbDeviceEnumerator.cpp:71]   - Name: DaBai DCW, PID: 0x0659, SN/ID: , connection: USB2.0
+[05/20 10:18:57.935976][info][3391][DeviceManager.cpp:15] Current found device(s): (1)
+[05/20 10:18:57.936000][info][3391][DeviceManager.cpp:24] 	- Name: DaBai DCW, PID: 0x0659, SN/ID: , Connection: USB2.0
+[05/20 10:18:57.936016][debug][3391][DeviceManager.cpp:52] DeviceManager construct done!
+[05/20 10:18:57.936991][info][3391][DeviceManager.cpp:304] Enable net device enumeration: false
+[05/20 10:18:58.039838][debug][3405][DeviceManager.cpp:109] DeviceManager  createDevice...
+[05/20 10:18:58.039896][debug][3405][UsbDeviceEnumerator.cpp:281] UsbDeviceEnumerator createDevice...
+[05/20 10:18:58.041347][info][3405][OpenNIHostProtocol.cpp:567] Hardware versions: FW=5.8.23 (14), HW=0, Chip=7, Sensor=0, SYS=12
+[05/20 10:18:58.042630][error][3405][OpenNIHostProtocol.cpp:584] Get usb core type failed!
+[05/20 10:18:58.042691][debug][3405][OpenNIHostProtocol.cpp:665] Requesting KeepAlive...
+[05/20 10:18:58.043156][debug][3405][OpenNIHostProtocol.cpp:672] Got KeepAlive Reply.
+[05/20 10:18:58.044674][debug][3405][OpenNIHostProtocol.cpp:665] Requesting KeepAlive...
+[05/20 10:18:58.045120][debug][3405][OpenNIHostProtocol.cpp:672] Got KeepAlive Reply.
+[05/20 10:18:58.045143][debug][3405][OpenNIHostProtocol.cpp:690] Getting the fixed params...
+[05/20 10:18:58.045565][debug][3405][OpenNIHostProtocol.cpp:730] Reading sensor serial number...
+[05/20 10:18:58.045971][info][3405][OpenNISensorFirmware.cpp:1185] Sensor serial number:CH26B3200CG
+[05/20 10:18:58.046408][debug][3405][OpenNIHostProtocol.cpp:802] Reading sensor platform string...
+[05/20 10:18:58.046738][info][3405][OpenNISensorFirmware.cpp:1213] Firmware version RD2460
+[05/20 10:18:58.047033][info][3405][OpenNISensorFirmware.cpp:1219] Device frequency 31.25
+[05/20 10:18:58.047047][debug][3405][OpenNIHostProtocol.cpp:879] Update supported depth video modes from firmware
+[05/20 10:18:58.047070][debug][3405][OpenNIHostProtocol.cpp:915] Reading CMOS 1 supported presets...
+[05/20 10:18:58.047454][debug][3405][OpenNIHostProtocol.cpp:879] Update supported depth video modes from firmware
+[05/20 10:18:58.047488][debug][3405][OpenNIHostProtocol.cpp:915] Reading CMOS 2 supported presets...
+[05/20 10:18:58.056429][debug][3405][OpenNISensorFirmware.cpp:1231] OpenNI camera params read.
+[05/20 10:18:58.097709][debug][3405][OpenNISensorFirmware.cpp:2053] OpenNI camera params read end.
+[05/20 10:18:58.098431][error][3405][OpenNIHostProtocol.cpp:957] Host Protocol sub cmd not supported!
+[05/20 10:18:58.098478][warning][3405][OpenNISensorFirmware.cpp:153] OpenNI2 camera don't support Watchdog function!
+[05/20 10:18:58.098493][debug][3405][OpenNISensorIO.cpp:29] Opening endpoint 0x81 for depth...
+[05/20 10:18:58.098505][debug][3405][OpenNISensorIO.cpp:41] Depth endpoint(0x81) was successfully opened.
+[05/20 10:18:58.098518][debug][3405][OpenNISensorIO.cpp:48] Opening endpoint 0x82 for IR...
+[05/20 10:18:58.098529][debug][3405][OpenNISensorIO.cpp:54] IR endpoint(0x82) was successfully opened.
+[05/20 10:18:58.098538][debug][3405][OpenNISensorIO.cpp:60] Opening endpoint 0x84  for image...
+[05/20 10:18:58.098547][debug][3405][OpenNISensorIO.cpp:65] Image endpoint is not supported...
+[05/20 10:18:58.098556][debug][3405][OpenNISensorIO.cpp:75] Opening endpoint 0x83 for misc...
+[05/20 10:18:58.098565][debug][3405][OpenNISensorIO.cpp:80] Misc endpoint is not supported...
+[05/20 10:18:58.098574][debug][3405][OpenNISensorIO.cpp:87] Endpoints open end.
+[05/20 10:18:58.098590][debug][3405][VendorCommand.cpp:196] VendorCommand constructor 7f3c0053d0
+[05/20 10:18:58.098606][debug][3405][OpenNIDevice.cpp:190] init sensor map start!
+[05/20 10:18:58.098632][debug][3405][OpenNIDevice.cpp:204] init sensor map done!
+[05/20 10:18:58.098748][debug][3405][PropertyAccessor.cpp:50] get firmware data success! propertyId: 1000, dataLen: 164
+[05/20 10:18:58.098776][info][3405][AbstractDevice.cpp:117] 	- Firmware version: RD2460
+[05/20 10:18:58.099001][debug][3405][OpenNIDevice.cpp:244] Init depth process param start!
+[05/20 10:18:58.099056][debug][3405][OpenNIDevice.cpp:259] Device baseline: 39.919926, fx:615.303955078125
+[05/20 10:18:58.099069][debug][3405][OpenNIDevice.cpp:290] Init depth process param done!
+[05/20 10:18:58.099082][info][3405][OpenNIDevice.cpp:37] OpenNI device created! PID: 0x0659, SN: CH26B3200CG
+[05/20 10:18:58.099095][debug][3405][UsbDeviceEnumerator.cpp:343] Device created successfully! Name: DaBai DCW, PID: 0x0659, SN/ID: 
+[05/20 10:18:58.099109][info][3405][DeviceManager.cpp:150] Device created successfully! Name: DaBai DCW, PID: 0x0659, SN/ID: 
+[05/20 10:18:58.099238][debug][3405][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[05/20 10:18:58.112804][debug][3405][FrameProcessor.cpp:82] FrameProcessor init with 3 blocks! @546467659744
+[05/20 10:18:58.112919][debug][3405][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[05/20 10:18:58.112942][debug][3405][FrameProcessor.cpp:90]  - block: FrameUnpacker, status: enable
+[05/20 10:18:58.112965][debug][3405][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[05/20 10:18:58.112980][debug][3405][FrameProcessor.cpp:90]  - block: IRFrameSamplingProcessor, status: enable
+[05/20 10:18:58.113012][debug][3405][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[05/20 10:18:58.113028][debug][3405][FrameProcessor.cpp:90]  - block: FrameMirror, status: disable
+[05/20 10:18:58.113085][info][3405][OpenNIDevice.cpp:509] IR sensor has been created!
+[05/20 10:18:58.113333][debug][3405][OpenNIVideoSensor.cpp:857] Query stream profile! size= 28, sensorType=OB_SENSOR_IR
+[05/20 10:18:58.113389][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 640, height: 480, fps: 30}
+[05/20 10:18:58.113411][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 160, height: 120, fps: 5}
+[05/20 10:18:58.113541][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 160, height: 120, fps: 10}
+[05/20 10:18:58.113668][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 160, height: 120, fps: 15}
+[05/20 10:18:58.113692][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 160, height: 120, fps: 30}
+[05/20 10:18:58.113707][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 240, height: 180, fps: 5}
+[05/20 10:18:58.113721][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 240, height: 180, fps: 10}
+[05/20 10:18:58.113773][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 240, height: 180, fps: 15}
+[05/20 10:18:58.113789][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 240, height: 180, fps: 30}
+[05/20 10:18:58.113805][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 320, height: 240, fps: 5}
+[05/20 10:18:58.113820][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 320, height: 240, fps: 10}
+[05/20 10:18:58.113833][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 320, height: 240, fps: 15}
+[05/20 10:18:58.113847][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 320, height: 240, fps: 30}
+[05/20 10:18:58.113861][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 480, height: 360, fps: 5}
+[05/20 10:18:58.113875][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 480, height: 360, fps: 10}
+[05/20 10:18:58.113890][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 480, height: 360, fps: 15}
+[05/20 10:18:58.113904][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 480, height: 360, fps: 30}
+[05/20 10:18:58.113918][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 512, height: 384, fps: 5}
+[05/20 10:18:58.113932][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 512, height: 384, fps: 10}
+[05/20 10:18:58.113945][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 512, height: 384, fps: 15}
+[05/20 10:18:58.113961][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 512, height: 384, fps: 30}
+[05/20 10:18:58.113975][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 640, height: 480, fps: 5}
+[05/20 10:18:58.113989][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 640, height: 480, fps: 10}
+[05/20 10:18:58.114004][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 640, height: 480, fps: 15}
+[05/20 10:18:58.114018][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 1024, height: 768, fps: 5}
+[05/20 10:18:58.114031][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 1024, height: 768, fps: 10}
+[05/20 10:18:58.114044][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 1280, height: 800, fps: 5}
+[05/20 10:18:58.114058][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_IR, format: OB_FORMAT_Y10, width: 1280, height: 800, fps: 10}
+[05/20 10:18:58.114198][debug][3405][LinuxPal.cpp:260] Uvc backend have been set to LibUVC(1)
+[05/20 10:18:58.177082][debug][3405][ObLibuvcDevicePort.cpp:58] uvc_open success
+[05/20 10:18:58.177129][debug][3405][LinuxPal.cpp:103] UVC device have been create with LibUVC backend! dev: 1-2.3.3-8, inf: 1-2.3.3-8.0
+[05/20 10:18:58.177153][debug][3405][FrameProcessor.cpp:82] FrameProcessor init with 1 blocks! @546467632608
+[05/20 10:18:58.177197][debug][3405][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[05/20 10:18:58.177215][debug][3405][FrameProcessor.cpp:90]  - block: FormatConverter, status: disable
+[05/20 10:18:58.177233][debug][3405][VideoSensor.cpp:250] VideoSensor construct!
+[05/20 10:18:58.177287][debug][3405][VideoSensor.cpp:276] VideoSensor created, @OB_SENSOR_COLOR
+[05/20 10:18:58.177302][info][3405][OpenNIDevice.cpp:460] Color sensor has been created!
+[05/20 10:18:58.177693][info][3405][VideoSensor.cpp:382] Query stream profile! size= 77, SensorType=OB_SENSOR_COLOR
+[05/20 10:18:58.177752][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 640, height: 360, fps: 30}
+[05/20 10:18:58.177771][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 640, height: 480, fps: 30}
+[05/20 10:18:58.177784][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 640, height: 480, fps: 25}
+[05/20 10:18:58.177798][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 640, height: 480, fps: 20}
+[05/20 10:18:58.177811][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 640, height: 480, fps: 15}
+[05/20 10:18:58.177824][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 640, height: 480, fps: 10}
+[05/20 10:18:58.177838][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 640, height: 480, fps: 5}
+[05/20 10:18:58.177852][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1920, height: 1080, fps: 30}
+[05/20 10:18:58.177866][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1920, height: 1080, fps: 25}
+[05/20 10:18:58.177878][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1920, height: 1080, fps: 20}
+[05/20 10:18:58.177891][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1920, height: 1080, fps: 15}
+[05/20 10:18:58.177905][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1920, height: 1080, fps: 10}
+[05/20 10:18:58.177917][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1920, height: 1080, fps: 5}
+[05/20 10:18:58.177929][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1440, height: 1080, fps: 30}
+[05/20 10:18:58.177942][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1440, height: 1080, fps: 25}
+[05/20 10:18:58.177954][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1440, height: 1080, fps: 20}
+[05/20 10:18:58.177967][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1440, height: 1080, fps: 15}
+[05/20 10:18:58.177980][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1440, height: 1080, fps: 10}
+[05/20 10:18:58.177993][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1440, height: 1080, fps: 5}
+[05/20 10:18:58.178006][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 960, fps: 30}
+[05/20 10:18:58.178019][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 960, fps: 25}
+[05/20 10:18:58.178032][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 960, fps: 20}
+[05/20 10:18:58.178046][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 960, fps: 15}
+[05/20 10:18:58.178059][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 960, fps: 10}
+[05/20 10:18:58.178072][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 960, fps: 5}
+[05/20 10:18:58.178084][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 720, fps: 30}
+[05/20 10:18:58.178097][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 720, fps: 25}
+[05/20 10:18:58.178110][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 720, fps: 20}
+[05/20 10:18:58.178138][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 720, fps: 15}
+[05/20 10:18:58.178153][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 720, fps: 10}
+[05/20 10:18:58.178166][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 1280, height: 720, fps: 5}
+[05/20 10:18:58.178179][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 640, height: 360, fps: 25}
+[05/20 10:18:58.178192][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 640, height: 360, fps: 20}
+[05/20 10:18:58.178205][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 640, height: 360, fps: 15}
+[05/20 10:18:58.178219][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 640, height: 360, fps: 10}
+[05/20 10:18:58.178231][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 640, height: 360, fps: 5}
+[05/20 10:18:58.178243][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 320, height: 240, fps: 30}
+[05/20 10:18:58.178255][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 320, height: 240, fps: 25}
+[05/20 10:18:58.178268][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 320, height: 240, fps: 20}
+[05/20 10:18:58.178281][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 320, height: 240, fps: 15}
+[05/20 10:18:58.178293][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 320, height: 240, fps: 10}
+[05/20 10:18:58.178306][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 320, height: 240, fps: 5}
+[05/20 10:18:58.178319][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 320, height: 180, fps: 30}
+[05/20 10:18:58.178332][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 320, height: 180, fps: 25}
+[05/20 10:18:58.178345][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 320, height: 180, fps: 20}
+[05/20 10:18:58.178358][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 320, height: 180, fps: 15}
+[05/20 10:18:58.178371][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 320, height: 180, fps: 10}
+[05/20 10:18:58.178384][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_MJPG, width: 320, height: 180, fps: 5}
+[05/20 10:18:58.178397][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 640, height: 480, fps: 30}
+[05/20 10:18:58.178409][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 640, height: 480, fps: 25}
+[05/20 10:18:58.178422][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 640, height: 480, fps: 20}
+[05/20 10:18:58.178435][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 640, height: 480, fps: 15}
+[05/20 10:18:58.178448][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 640, height: 480, fps: 10}
+[05/20 10:18:58.178461][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 640, height: 480, fps: 5}
+[05/20 10:18:58.178475][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 1920, height: 1080, fps: 5}
+[05/20 10:18:58.178488][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 1440, height: 1080, fps: 5}
+[05/20 10:18:58.178501][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 1280, height: 960, fps: 5}
+[05/20 10:18:58.178533][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 1280, height: 720, fps: 10}
+[05/20 10:18:58.178548][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 1280, height: 720, fps: 5}
+[05/20 10:18:58.178561][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 640, height: 360, fps: 30}
+[05/20 10:18:58.178574][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 640, height: 360, fps: 25}
+[05/20 10:18:58.178588][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 640, height: 360, fps: 20}
+[05/20 10:18:58.178600][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 640, height: 360, fps: 15}
+[05/20 10:18:58.178613][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 640, height: 360, fps: 10}
+[05/20 10:18:58.178624][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 640, height: 360, fps: 5}
+[05/20 10:18:58.178637][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 320, height: 240, fps: 30}
+[05/20 10:18:58.178650][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 320, height: 240, fps: 25}
+[05/20 10:18:58.178663][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 320, height: 240, fps: 20}
+[05/20 10:18:58.178675][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 320, height: 240, fps: 15}
+[05/20 10:18:58.178688][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 320, height: 240, fps: 10}
+[05/20 10:18:58.178701][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 320, height: 240, fps: 5}
+[05/20 10:18:58.178714][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 320, height: 180, fps: 30}
+[05/20 10:18:58.178727][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 320, height: 180, fps: 25}
+[05/20 10:18:58.178739][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 320, height: 180, fps: 20}
+[05/20 10:18:58.178752][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 320, height: 180, fps: 15}
+[05/20 10:18:58.178765][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 320, height: 180, fps: 10}
+[05/20 10:18:58.178777][info][3405][VideoSensor.cpp:384]  - {type: OB_STREAM_COLOR, format: OB_FORMAT_YUYV, width: 320, height: 180, fps: 5}
+[05/20 10:18:58.178969][debug][3405][FrameProcessor.cpp:82] FrameProcessor init with 5 blocks! @546467686544
+[05/20 10:18:58.179009][debug][3405][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[05/20 10:18:58.179026][debug][3405][FrameProcessor.cpp:90]  - block: FrameUnpacker, status: enable
+[05/20 10:18:58.179044][debug][3405][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[05/20 10:18:58.179057][debug][3405][FrameProcessor.cpp:90]  - block: FrameSoftFilter, status: enable
+[05/20 10:18:58.179076][debug][3405][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[05/20 10:18:58.179089][debug][3405][FrameProcessor.cpp:90]  - block: Disparity2DepthConverterHalley, status: enable
+[05/20 10:18:58.179110][debug][3405][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[05/20 10:18:58.179122][debug][3405][FrameProcessor.cpp:90]  - block: D2CFilter, status: disable
+[05/20 10:18:58.179156][debug][3405][FrameProcessingBlock.cpp:26] Block created with frame queue size: 10
+[05/20 10:18:58.179173][debug][3405][FrameProcessor.cpp:90]  - block: PostProcessFilter, status: disable
+[05/20 10:18:58.179777][info][3405][OpenNIDevice.cpp:374] Depth sensor has been created!
+[05/20 10:18:58.180823][debug][3405][OpenNIVideoSensor.cpp:857] Query stream profile! size= 68, sensorType=OB_SENSOR_DEPTH
+[05/20 10:18:58.180865][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 360, fps: 30}
+[05/20 10:18:58.180883][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 160, height: 120, fps: 5}
+[05/20 10:18:58.180897][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 160, height: 120, fps: 5}
+[05/20 10:18:58.180911][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 160, height: 120, fps: 10}
+[05/20 10:18:58.180924][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 160, height: 120, fps: 10}
+[05/20 10:18:58.180937][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 160, height: 120, fps: 15}
+[05/20 10:18:58.180950][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 160, height: 120, fps: 15}
+[05/20 10:18:58.180964][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 160, height: 120, fps: 30}
+[05/20 10:18:58.180978][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 160, height: 120, fps: 30}
+[05/20 10:18:58.180990][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 240, height: 180, fps: 5}
+[05/20 10:18:58.181004][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 240, height: 180, fps: 5}
+[05/20 10:18:58.181017][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 240, height: 180, fps: 10}
+[05/20 10:18:58.181030][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 240, height: 180, fps: 10}
+[05/20 10:18:58.181044][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 240, height: 180, fps: 15}
+[05/20 10:18:58.181057][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 240, height: 180, fps: 15}
+[05/20 10:18:58.181071][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 240, height: 180, fps: 30}
+[05/20 10:18:58.181083][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 240, height: 180, fps: 30}
+[05/20 10:18:58.181096][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 240, fps: 5}
+[05/20 10:18:58.181108][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 240, fps: 5}
+[05/20 10:18:58.181121][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 240, fps: 10}
+[05/20 10:18:58.181134][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 240, fps: 10}
+[05/20 10:18:58.181149][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 240, fps: 15}
+[05/20 10:18:58.181161][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 240, fps: 15}
+[05/20 10:18:58.181174][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 240, fps: 30}
+[05/20 10:18:58.181187][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 240, fps: 30}
+[05/20 10:18:58.181200][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 180, fps: 5}
+[05/20 10:18:58.181213][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 180, fps: 5}
+[05/20 10:18:58.181247][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 180, fps: 10}
+[05/20 10:18:58.181262][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 180, fps: 10}
+[05/20 10:18:58.181276][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 180, fps: 15}
+[05/20 10:18:58.181290][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 180, fps: 15}
+[05/20 10:18:58.181304][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 180, fps: 30}
+[05/20 10:18:58.181317][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 180, fps: 30}
+[05/20 10:18:58.181330][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 480, height: 360, fps: 5}
+[05/20 10:18:58.181344][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 480, height: 360, fps: 5}
+[05/20 10:18:58.181357][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 480, height: 360, fps: 10}
+[05/20 10:18:58.181370][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 480, height: 360, fps: 10}
+[05/20 10:18:58.181383][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 480, height: 360, fps: 15}
+[05/20 10:18:58.181397][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 480, height: 360, fps: 15}
+[05/20 10:18:58.181411][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 480, height: 360, fps: 30}
+[05/20 10:18:58.181424][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 480, height: 360, fps: 30}
+[05/20 10:18:58.181438][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 512, height: 384, fps: 5}
+[05/20 10:18:58.181451][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 512, height: 384, fps: 5}
+[05/20 10:18:58.181464][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 512, height: 384, fps: 10}
+[05/20 10:18:58.181477][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 512, height: 384, fps: 10}
+[05/20 10:18:58.181491][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 512, height: 384, fps: 15}
+[05/20 10:18:58.181503][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 512, height: 384, fps: 15}
+[05/20 10:18:58.181516][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 512, height: 384, fps: 30}
+[05/20 10:18:58.181529][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 512, height: 384, fps: 30}
+[05/20 10:18:58.181542][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 480, fps: 5}
+[05/20 10:18:58.181555][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 480, fps: 5}
+[05/20 10:18:58.181568][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 480, fps: 10}
+[05/20 10:18:58.181582][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 480, fps: 10}
+[05/20 10:18:58.181595][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 480, fps: 15}
+[05/20 10:18:58.181609][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 480, fps: 15}
+[05/20 10:18:58.181641][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 480, fps: 30}
+[05/20 10:18:58.181655][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 480, fps: 30}
+[05/20 10:18:58.181668][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 360, fps: 5}
+[05/20 10:18:58.181681][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 360, fps: 5}
+[05/20 10:18:58.181693][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 360, fps: 10}
+[05/20 10:18:58.181707][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 360, fps: 10}
+[05/20 10:18:58.181720][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 360, fps: 15}
+[05/20 10:18:58.181733][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 360, fps: 15}
+[05/20 10:18:58.181745][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 360, fps: 30}
+[05/20 10:18:58.181757][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 1024, height: 768, fps: 5}
+[05/20 10:18:58.181770][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 1024, height: 768, fps: 5}
+[05/20 10:18:58.181784][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 1024, height: 768, fps: 10}
+[05/20 10:18:58.181797][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 1024, height: 768, fps: 10}
+[05/20 10:18:58.181960][debug][3405][OpenNISensorParams.cpp:110] set property DepthMirror(0)
+[05/20 10:18:58.182868][debug][3405][OpenNISensorParams.cpp:121] DepthMirror(0)was successfully set.
+[05/20 10:18:58.182954][debug][3405][PropertyAccessor.cpp:17] set property value success! propertyId: 14, value: {intValue: 0, floatValue: 0}
+[05/20 10:18:58.182996][debug][3405][FrameProcessor.cpp:202] setPropertyValue id=18, value={intValue: 0, floatValue: 0}
+[05/20 10:18:58.183022][debug][3405][PropertyAccessor.cpp:17] set property value success! propertyId: 18, value: {intValue: 0, floatValue: 0}
+[05/20 10:18:58.183377][debug][3405][ObLibuvcDevicePort.cpp:336] ObLibuvcDevicePort::uvcCtrlValueTranslate propertyId=129, action=2011, value=0
+[05/20 10:18:58.183418][debug][3405][PropertyAccessor.cpp:17] set property value success! propertyId: 81, value: {intValue: 0, floatValue: 0}
+[05/20 10:18:58.183459][debug][3405][PropertyAccessor.cpp:17] set property value success! propertyId: 24, value: {intValue: 1, floatValue: 1.4013e-45}
+[05/20 10:18:58.183489][debug][3405][ObLibuvcDevicePort.cpp:336] ObLibuvcDevicePort::uvcCtrlValueTranslate propertyId=1, action=2000, value=1
+[05/20 10:18:58.183684][debug][3405][ObLibuvcDevicePort.cpp:368] UVC_SET_CUR: getAERes:9.
+[05/20 10:18:58.183708][debug][3405][ObLibuvcDevicePort.cpp:372] UVC_AE_MODE_D0_MANUAL:translated_value:8,value:1.
+[05/20 10:18:58.183915][debug][3405][ObLibuvcDevicePort.cpp:209] ObLibuvcDevicePort::setPu() propertyId = 2000 value = 
+[05/20 10:18:58.183948][debug][3405][PropertyAccessor.cpp:17] set property value success! propertyId: 2000, value: {intValue: 1, floatValue: 1.4013e-45}
+[05/20 10:18:58.184687][debug][3405][PropertyAccessor.cpp:17] set property value success! propertyId: 2025, value: {intValue: 1, floatValue: 1.4013e-45}
+[05/20 10:18:58.184766][debug][3405][PropertyAccessor.cpp:28] get property value success! propertyId: 40, value: {intValue: 16, floatValue: 2.24208e-44}
+[05/20 10:18:58.184799][debug][3405][PropertyAccessor.cpp:28] get property value success! propertyId: 41, value: {intValue: 480, floatValue: 6.72623e-43}
+[05/20 10:18:58.184863][debug][3405][OpenNIVideoSensor.cpp:857] Query stream profile! size= 68, sensorType=OB_SENSOR_DEPTH
+[05/20 10:18:58.184884][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 360, fps: 30}
+[05/20 10:18:58.184898][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 160, height: 120, fps: 5}
+[05/20 10:18:58.184912][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 160, height: 120, fps: 5}
+[05/20 10:18:58.184925][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 160, height: 120, fps: 10}
+[05/20 10:18:58.184938][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 160, height: 120, fps: 10}
+[05/20 10:18:58.184951][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 160, height: 120, fps: 15}
+[05/20 10:18:58.184964][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 160, height: 120, fps: 15}
+[05/20 10:18:58.184976][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 160, height: 120, fps: 30}
+[05/20 10:18:58.184989][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 160, height: 120, fps: 30}
+[05/20 10:18:58.185002][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 240, height: 180, fps: 5}
+[05/20 10:18:58.185015][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 240, height: 180, fps: 5}
+[05/20 10:18:58.185028][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 240, height: 180, fps: 10}
+[05/20 10:18:58.185041][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 240, height: 180, fps: 10}
+[05/20 10:18:58.185054][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 240, height: 180, fps: 15}
+[05/20 10:18:58.185067][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 240, height: 180, fps: 15}
+[05/20 10:18:58.185080][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 240, height: 180, fps: 30}
+[05/20 10:18:58.185093][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 240, height: 180, fps: 30}
+[05/20 10:18:58.185106][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 240, fps: 5}
+[05/20 10:18:58.185119][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 240, fps: 5}
+[05/20 10:18:58.185131][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 240, fps: 10}
+[05/20 10:18:58.185144][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 240, fps: 10}
+[05/20 10:18:58.185156][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 240, fps: 15}
+[05/20 10:18:58.185169][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 240, fps: 15}
+[05/20 10:18:58.185183][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 240, fps: 30}
+[05/20 10:18:58.185196][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 240, fps: 30}
+[05/20 10:18:58.185209][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 180, fps: 5}
+[05/20 10:18:58.185222][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 180, fps: 5}
+[05/20 10:18:58.185250][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 180, fps: 10}
+[05/20 10:18:58.185265][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 180, fps: 10}
+[05/20 10:18:58.185277][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 180, fps: 15}
+[05/20 10:18:58.185290][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 180, fps: 15}
+[05/20 10:18:58.185303][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 180, fps: 30}
+[05/20 10:18:58.185316][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 180, fps: 30}
+[05/20 10:18:58.185329][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 480, height: 360, fps: 5}
+[05/20 10:18:58.185342][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 480, height: 360, fps: 5}
+[05/20 10:18:58.185354][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 480, height: 360, fps: 10}
+[05/20 10:18:58.185367][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 480, height: 360, fps: 10}
+[05/20 10:18:58.185380][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 480, height: 360, fps: 15}
+[05/20 10:18:58.185393][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 480, height: 360, fps: 15}
+[05/20 10:18:58.185406][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 480, height: 360, fps: 30}
+[05/20 10:18:58.185418][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 480, height: 360, fps: 30}
+[05/20 10:18:58.185431][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 512, height: 384, fps: 5}
+[05/20 10:18:58.185445][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 512, height: 384, fps: 5}
+[05/20 10:18:58.185458][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 512, height: 384, fps: 10}
+[05/20 10:18:58.185471][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 512, height: 384, fps: 10}
+[05/20 10:18:58.185485][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 512, height: 384, fps: 15}
+[05/20 10:18:58.185498][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 512, height: 384, fps: 15}
+[05/20 10:18:58.185512][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 512, height: 384, fps: 30}
+[05/20 10:18:58.185525][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 512, height: 384, fps: 30}
+[05/20 10:18:58.185539][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 480, fps: 5}
+[05/20 10:18:58.185553][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 480, fps: 5}
+[05/20 10:18:58.185566][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 480, fps: 10}
+[05/20 10:18:58.185580][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 480, fps: 10}
+[05/20 10:18:58.185593][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 480, fps: 15}
+[05/20 10:18:58.185606][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 480, fps: 15}
+[05/20 10:18:58.185635][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 480, fps: 30}
+[05/20 10:18:58.185650][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 480, fps: 30}
+[05/20 10:18:58.185662][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 360, fps: 5}
+[05/20 10:18:58.185675][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 360, fps: 5}
+[05/20 10:18:58.185688][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 360, fps: 10}
+[05/20 10:18:58.185701][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 360, fps: 10}
+[05/20 10:18:58.185715][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 360, fps: 15}
+[05/20 10:18:58.185728][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 360, fps: 15}
+[05/20 10:18:58.185741][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 360, fps: 30}
+[05/20 10:18:58.185754][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 1024, height: 768, fps: 5}
+[05/20 10:18:58.185768][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 1024, height: 768, fps: 5}
+[05/20 10:18:58.185780][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 1024, height: 768, fps: 10}
+[05/20 10:18:58.185793][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 1024, height: 768, fps: 10}
+[05/20 10:18:58.186258][warning][3405][ObException.cpp:5] Invalid input, No matched video stream profile found!
+[05/20 10:18:58.186934][debug][3405][OpenNIVideoSensor.cpp:857] Query stream profile! size= 68, sensorType=OB_SENSOR_DEPTH
+[05/20 10:18:58.186981][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 360, fps: 30}
+[05/20 10:18:58.186999][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 160, height: 120, fps: 5}
+[05/20 10:18:58.187014][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 160, height: 120, fps: 5}
+[05/20 10:18:58.187029][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 160, height: 120, fps: 10}
+[05/20 10:18:58.187045][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 160, height: 120, fps: 10}
+[05/20 10:18:58.187059][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 160, height: 120, fps: 15}
+[05/20 10:18:58.187073][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 160, height: 120, fps: 15}
+[05/20 10:18:58.187088][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 160, height: 120, fps: 30}
+[05/20 10:18:58.187103][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 160, height: 120, fps: 30}
+[05/20 10:18:58.187119][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 240, height: 180, fps: 5}
+[05/20 10:18:58.187134][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 240, height: 180, fps: 5}
+[05/20 10:18:58.187147][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 240, height: 180, fps: 10}
+[05/20 10:18:58.187162][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 240, height: 180, fps: 10}
+[05/20 10:18:58.187203][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 240, height: 180, fps: 15}
+[05/20 10:18:58.187219][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 240, height: 180, fps: 15}
+[05/20 10:18:58.187234][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 240, height: 180, fps: 30}
+[05/20 10:18:58.187249][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 240, height: 180, fps: 30}
+[05/20 10:18:58.187262][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 240, fps: 5}
+[05/20 10:18:58.187276][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 240, fps: 5}
+[05/20 10:18:58.187292][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 240, fps: 10}
+[05/20 10:18:58.187306][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 240, fps: 10}
+[05/20 10:18:58.187320][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 240, fps: 15}
+[05/20 10:18:58.187334][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 240, fps: 15}
+[05/20 10:18:58.187349][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 240, fps: 30}
+[05/20 10:18:58.187366][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 240, fps: 30}
+[05/20 10:18:58.187381][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 180, fps: 5}
+[05/20 10:18:58.187395][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 180, fps: 5}
+[05/20 10:18:58.187409][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 180, fps: 10}
+[05/20 10:18:58.187425][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 180, fps: 10}
+[05/20 10:18:58.187440][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 180, fps: 15}
+[05/20 10:18:58.187454][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 180, fps: 15}
+[05/20 10:18:58.187467][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 320, height: 180, fps: 30}
+[05/20 10:18:58.187482][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 320, height: 180, fps: 30}
+[05/20 10:18:58.187498][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 480, height: 360, fps: 5}
+[05/20 10:18:58.187512][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 480, height: 360, fps: 5}
+[05/20 10:18:58.187526][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 480, height: 360, fps: 10}
+[05/20 10:18:58.187541][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 480, height: 360, fps: 10}
+[05/20 10:18:58.187556][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 480, height: 360, fps: 15}
+[05/20 10:18:58.187570][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 480, height: 360, fps: 15}
+[05/20 10:18:58.187583][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 480, height: 360, fps: 30}
+[05/20 10:18:58.187597][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 480, height: 360, fps: 30}
+[05/20 10:18:58.187634][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 512, height: 384, fps: 5}
+[05/20 10:18:58.187649][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 512, height: 384, fps: 5}
+[05/20 10:18:58.187663][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 512, height: 384, fps: 10}
+[05/20 10:18:58.187678][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 512, height: 384, fps: 10}
+[05/20 10:18:58.187692][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 512, height: 384, fps: 15}
+[05/20 10:18:58.187706][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 512, height: 384, fps: 15}
+[05/20 10:18:58.187719][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 512, height: 384, fps: 30}
+[05/20 10:18:58.187735][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 512, height: 384, fps: 30}
+[05/20 10:18:58.187751][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 480, fps: 5}
+[05/20 10:18:58.187765][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 480, fps: 5}
+[05/20 10:18:58.187780][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 480, fps: 10}
+[05/20 10:18:58.187795][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 480, fps: 10}
+[05/20 10:18:58.187811][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 480, fps: 15}
+[05/20 10:18:58.187825][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 480, fps: 15}
+[05/20 10:18:58.187838][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 480, fps: 30}
+[05/20 10:18:58.187852][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 480, fps: 30}
+[05/20 10:18:58.187866][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 360, fps: 5}
+[05/20 10:18:58.187881][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 360, fps: 5}
+[05/20 10:18:58.187895][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 360, fps: 10}
+[05/20 10:18:58.187909][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 360, fps: 10}
+[05/20 10:18:58.187926][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 640, height: 360, fps: 15}
+[05/20 10:18:58.187940][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 360, fps: 15}
+[05/20 10:18:58.187954][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 640, height: 360, fps: 30}
+[05/20 10:18:58.187968][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 1024, height: 768, fps: 5}
+[05/20 10:18:58.187984][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 1024, height: 768, fps: 5}
+[05/20 10:18:58.188000][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y11, width: 1024, height: 768, fps: 10}
+[05/20 10:18:58.188014][debug][3405][OpenNIVideoSensor.cpp:859]  - {type: OB_STREAM_DEPTH, format: OB_FORMAT_Y12, width: 1024, height: 768, fps: 10}

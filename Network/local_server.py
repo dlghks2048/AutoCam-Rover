@@ -32,6 +32,7 @@ log = logging.getLogger(__name__)
 HOST               = "0.0.0.0"
 PORT               = 5000
 SAVE_DIR           = Path("received_images")
+DB_PATH            = Path(__file__).parent / "autocam_rover.db"
 MAX_CONTENT        = 10 * 1024 * 1024
 DB_RECONNECT_DELAY = 2   # DB 재연결 대기(초)
 DB_RECONNECT_TRIES = 3   # DB 재연결 최대 시도 횟수
@@ -214,8 +215,8 @@ def _sse_push(record: dict, event_name: str | None = None) -> None:
 
 # DB 워커 ───────────────────────────────────────────────────────────────────
 def _db_worker() -> None:
-    """db_queue 에서 프레임을 꺼내 이미지 저장 후 index.jsonl 기록 + event_logs.db 삽입."""
-    db_path = str(SAVE_DIR / "event_logs.db")
+    """db_queue 에서 프레임을 꺼내 이미지 저장 후 index.jsonl 기록 + autocam_rover.db 삽입."""
+    db_path = str(DB_PATH)
     conn    = sqlite3.connect(db_path)
     while True:
         frame = db_queue.get()
@@ -245,7 +246,7 @@ def _db_worker() -> None:
             for attempt in range(DB_RECONNECT_TRIES):
                 try:
                     conn.execute(
-                        "INSERT INTO events "
+                        "INSERT INTO event_logs "
                         "(captured_at, received_at, robot_location, event_type, image_path) "
                         "VALUES (?, ?, ?, ?, ?)",
                         params,
@@ -359,8 +360,8 @@ def _save_analysis(record: AnalysisRecord) -> None:
 
 # 분석 워커 ──────────────────────────────────────────────────────────────────
 def _analysis_worker() -> None:
-    """analysis_queue 에서 프레임을 꺼내 YOLO 추론 후 analysis.jsonl 기록 + analysis_results.db 삽입."""
-    db_path = str(SAVE_DIR / "analysis_results.db")
+    """analysis_queue 에서 프레임을 꺼내 YOLO 추론 후 analysis.jsonl 기록 + autocam_rover.db 삽입."""
+    db_path = str(DB_PATH)
     conn    = sqlite3.connect(db_path)
     while True:
         frame = analysis_queue.get()
@@ -609,10 +610,11 @@ def upload():
     except ValueError:
         loc_x, loc_y = 0.0, 0.0                               # 기본값: 0, 0
 
+    event_id=_next_event_id()
     frame = Frame(
         data=data,
-        event_id=_next_event_id(),
-        filename=f"{ts}_{frame.event_id}.jpg",
+        event_id=event_id,
+        filename=f"{ts}_{event_id}.jpg",
         captured_at=captured_at,
         timestamp=received_at,
         event_type=event_type,

@@ -1,11 +1,23 @@
 cd ~/ros2_ws/src/slam/maps && ros2 run nav2_map_server map_saver_cli -f map_01 --ros-args -p map_subscribe_transient_local:=true
 - 2D 라이더 맵 저장 명령어
 
+
+###저장한 3D 맵 보는 법###
+ros2 run rtabmap_slam rtabmap \
+  --ros-args \
+  -p database_path:=$HOME/.ros/rtabmap.db \
+  -p subscribe_rgbd:=false \
+  -p subscribe_depth:=false \
+  -p subscribe_scan:=false \
+  -p subscribe_odom_info:=false \
+  -p frame_id:=base_footprint \
+  -p map_frame_id:=map
+
 ros2 service call /publish_map rtabmap_msgs/srv/PublishMap "{global_map: true, optimized: true, graph_only: false}"
-- 3D 매핑 재발행하는 명령어.(ros2 launch slam rviz_rtabmap.launch.py 를 실행하는 상태여야 함.)
+- 3D 매핑 재발행하는 명령어.(위의 서버를 실행하는 상태여야 함.)
 
 
-저장한 2D 맵 보는 법
+###저장한 2D 맵 보는 법###
 ros2 run nav2_util lifecycle_bringup map_server
 - 2D 맵 전송 서버 실행
 

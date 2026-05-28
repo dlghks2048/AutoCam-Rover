@@ -20,6 +20,7 @@ def launch_setup(context):
 
     event_config = os.path.join(full_auto_path, 'config/event_rules.yaml')
     tracker_config = os.path.join(full_auto_path, 'config/camera_tracker.yaml')
+    control_config = os.path.join(full_auto_path, 'config/robot_control.yaml')
 
     nodes = []
     if LaunchConfiguration('start_controller').perform(context).lower() == 'true':
@@ -48,6 +49,24 @@ def launch_setup(context):
             executable='snapshot_sender',
             output='screen',
             parameters=[tracker_config],
+        ),
+        Node(
+            package='full_auto_rover',
+            executable='motion_controller',
+            output='screen',
+            parameters=[control_config],
+        ),
+        Node(
+            package='full_auto_rover',
+            executable='arm_controller',
+            output='screen',
+            parameters=[control_config],
+        ),
+        Node(
+            package='full_auto_rover',
+            executable='mission_coordinator',
+            output='screen',
+            parameters=[control_config],
         ),
     ])
     return nodes

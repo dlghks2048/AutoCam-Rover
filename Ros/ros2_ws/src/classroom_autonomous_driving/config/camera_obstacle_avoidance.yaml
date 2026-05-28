@@ -1,0 +1,26 @@
+camera_obstacle_avoidance:
+  ros__parameters:
+    depth_topic: /depth_cam/depth/image_raw
+    cmd_vel_topic: /controller/cmd_vel
+    start_on_launch: true
+
+    # Slow defaults are intentional for classroom testing.
+    linear_speed: 0.11
+    turn_speed: 0.45
+    reverse_speed: -0.06
+
+    obstacle_distance_m: 0.65
+    hard_stop_distance_m: 0.38
+    min_valid_depth_m: 0.12
+    max_valid_depth_m: 4.0
+    blocked_ratio_threshold: 0.22
+    clear_path_depth_m: 1.15
+    stale_depth_timeout_sec: 0.7
+
+    # Ignore ceiling/far top area and extreme image edges.
+    roi_top_ratio: 0.42
+    roi_bottom_ratio: 0.92
+    roi_left_ratio: 0.08
+    roi_right_ratio: 0.92
+
+    log_interval_sec: 1.0

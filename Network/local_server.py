@@ -1,9 +1,10 @@
 """
 로컬 서버 — 큐 기반 팬아웃 아키텍처
 
-POST /upload 에서 수신한 프레임을 2개의 독립 큐로 팬아웃:
-  gui_queue  (maxsize=1,   drop_oldest=True)  → MJPEG 스트림 (항상 최신)
-  db_queue   (maxsize=100, drop_oldest=False) → 디스크 저장
+POST /upload 에서 수신한 프레임을 3개의 독립 큐로 팬아웃:
+  gui_queue      (maxsize=1,   drop_oldest=True)  → MJPEG 스트림 (항상 최신)
+  db_queue       (maxsize=100, drop_oldest=False) → 디스크 저장
+  analysis_queue (maxsize=10,  drop_oldest=False) → YOLO 분석
 
 각 큐는 전용 워커 스레드만 소비 → 메모리 충돌·병목 방지
 """
@@ -12,6 +13,7 @@ from __future__ import annotations
 
 import json
 import queue
+import sqlite3
 import time
 import logging
 import threading
@@ -27,14 +29,27 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 log = logging.getLogger(__name__)
 
 # ── 설정 ──────────────────────────────────────────────────────────────────────
-HOST        = "0.0.0.0"
-PORT        = 5000
-SAVE_DIR    = Path("received_images")
-MAX_CONTENT = 10 * 1024 * 1024
+HOST               = "0.0.0.0"
+PORT               = 5000
+SAVE_DIR           = Path("received_images")
+MAX_CONTENT        = 10 * 1024 * 1024
+DB_RECONNECT_DELAY = 2   # DB 재연결 대기(초)
+DB_RECONNECT_TRIES = 3   # DB 재연결 최대 시도 횟수
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-# ── 프레임 데이터 클래스 ──────────────────────────────────────────────────────
+def _reconnect_db(old_conn: sqlite3.Connection, db_path: str, label: str) -> sqlite3.Connection:
+    """기존 DB 연결을 닫고 재연결을 시도한다. 성공 여부와 무관하게 새 연결 객체 반환."""
+    try:
+        old_conn.close()
+    except Exception:
+        pass
+    log.warning("[%s] DB 연결 끊김 — %ds 후 재연결 시도 (%s)", label, DB_RECONNECT_DELAY, db_path)
+    time.sleep(DB_RECONNECT_DELAY)
+    return sqlite3.connect(db_path)
+
+
+# ── 데이터 클래스 ────────────────────────────────────────────────────────────
 @dataclass
 class Frame:
     data:           bytes
@@ -42,9 +57,20 @@ class Frame:
     filename:       str
     captured_at:    str    # JetRover 촬영 시각
     timestamp:      str    # 서버 수신 시각 (received_at)
-
     event_type:     str
     robot_location: dict   # {"x": float, "y": float}
+
+
+@dataclass
+class AnalysisRecord:
+    event_id:               int
+    person_detected:        bool
+    fallen_object_detected: bool   # 현재는 항상 False (미구현)
+    obstacle_detected:      bool   # 현재는 항상 False (미구현)
+    motion_detected:        bool   # 움직임 예상 객체(사람 포함) 존재 시 True
+    risk_level:             str    # 사람 감지 시 "high", 아니면 "low"
+    result_summary:         str
+    analyzed_at:            str
 
 
 # ── FrameQueue ────────────────────────────────────────────────────────────────
@@ -98,10 +124,11 @@ class FrameQueue:
 
 
 # ── 큐 인스턴스 ───────────────────────────────────────────────────────────────
-gui_queue = FrameQueue("gui", maxsize=1,   drop_oldest=True)   # 최신 프레임만 유지
-db_queue  = FrameQueue("db",  maxsize=100, drop_oldest=False)  # 저장 버퍼
+gui_queue      = FrameQueue("gui",      maxsize=1,   drop_oldest=True)   # 최신 프레임만 유지
+db_queue       = FrameQueue("db",       maxsize=100, drop_oldest=False)  # 저장 버퍼
+analysis_queue = FrameQueue("analysis", maxsize=10,  drop_oldest=False)  # YOLO 분석
 
-_ALL_QUEUES: list[FrameQueue] = [gui_queue, db_queue]
+_ALL_QUEUES: list[FrameQueue] = [gui_queue, db_queue, analysis_queue]
 
 
 # ── 팬아웃 디스패처 ───────────────────────────────────────────────────────────
@@ -165,23 +192,31 @@ def _next_event_id() -> int:
 _latest_record: dict = {}
 _latest_record_lock = threading.Lock()
 
+# 가장 최근 분석 결과 — 페이지 최초 로드 시 /latest_analysis 가 읽음
+_latest_analysis: dict = {}
+_latest_analysis_lock = threading.Lock()
+
 # SSE 클라이언트 큐 목록 — db_worker가 push, /events 가 consume
 _sse_clients: list[queue.Queue] = []
 _sse_lock = threading.Lock()
 
-def _sse_push(record: dict) -> None:
-    """저장 완료된 레코드를 연결된 모든 브라우저로 즉시 전송."""
+def _sse_push(record: dict, event_name: str | None = None) -> None:
+    """저장 완료된 레코드를 연결된 모든 브라우저로 즉시 전송.
+    event_name 지정 시 named SSE event로 전송."""
+    msg = (record, event_name)
     with _sse_lock:
         for q in list(_sse_clients):
             try:
-                q.put_nowait(record)
+                q.put_nowait(msg)
             except queue.Full:
                 pass  # 느린 클라이언트는 건너뜀
 
 
 # DB 워커 ───────────────────────────────────────────────────────────────────
 def _db_worker() -> None:
-    """db_queue 에서 프레임을 꺼내 이미지 파일 저장 후 index.jsonl 에 경로 기록."""
+    """db_queue 에서 프레임을 꺼내 이미지 저장 후 index.jsonl 기록 + event_logs.db 삽입."""
+    db_path = str(SAVE_DIR / "event_logs.db")
+    conn    = sqlite3.connect(db_path)
     while True:
         frame = db_queue.get()
         if frame is None:
@@ -190,33 +225,208 @@ def _db_worker() -> None:
         index_path = SAVE_DIR / "index.jsonl"
         try:
             img_path.write_bytes(frame.data)
+            loc = frame.robot_location
             record = {
                 "event_id":       frame.event_id,
                 "captured_at":    frame.captured_at,
                 "received_at":    frame.timestamp,
-                "robot_location": frame.robot_location,
+                "robot_location": loc,
                 "event_type":     frame.event_type,
                 "image_path":     str(img_path),
             }
             with index_path.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
+            params = (
+                frame.captured_at, frame.timestamp,
+                json.dumps(loc, ensure_ascii=False),
+                frame.event_type, str(img_path),
+            )
+            db_ok = False
+            for attempt in range(DB_RECONNECT_TRIES):
+                try:
+                    conn.execute(
+                        "INSERT INTO events "
+                        "(captured_at, received_at, robot_location, event_type, image_path) "
+                        "VALUES (?, ?, ?, ?, ?)",
+                        params,
+                    )
+                    conn.commit()
+                    db_ok = True
+                    break
+                except sqlite3.Error as exc:
+                    log.warning("[db] DB 오류 (시도 %d/%d): %s", attempt + 1, DB_RECONNECT_TRIES, exc)
+                    conn = _reconnect_db(conn, db_path, "db")
+            if not db_ok:
+                log.error("[db] DB 삽입 %d회 모두 실패 — SSE/latest 업데이트 차단", DB_RECONNECT_TRIES)
+                continue
             with _latest_record_lock:
                 _latest_record.clear()
                 _latest_record.update(record)
-            _sse_push(record)
-            log.info("[db] 저장: %s", frame.filename)
+            _sse_push(record, event_name="record")
+            log.info("[db] #%d 저장: %s", frame.event_id, frame.filename)
         except OSError as exc:
             log.error("[db] 저장 실패: %s", exc)
 
 
+# ── YOLO 분석 ────────────────────────────────────────────────────────────────
+_yolo = None
+
+def _load_yolo() -> None:
+    """YOLOv8n 모델을 최초 1회 로드. ultralytics 미설치 시 경고만 출력."""
+    global _yolo
+    try:
+        from ultralytics import YOLO
+        _yolo = YOLO("yolov8n.pt")
+        log.info("YOLO 모델 로드 완료 (yolov8n.pt)")
+    except ImportError:
+        log.warning("ultralytics 패키지 없음 — YOLO 분석 비활성화 (pip install ultralytics)")
+    except Exception as exc:
+        log.warning("YOLO 모델 로드 실패: %s — 분석 비활성화", exc)
+
+
+def _detect_person(img: np.ndarray) -> bool:
+    """클래스 0(person)이 하나라도 감지되면 True."""
+    if _yolo is None:
+        return False
+    results = _yolo(img, classes=[0], verbose=False)
+    for r in results:
+        if len(r.boxes) > 0:
+            return True
+    return False
+
+
+def _detect_fallen_object(img: np.ndarray) -> bool:
+    """낙하물 감지 — 미구현, 항상 False."""
+    return False
+
+
+def _detect_obstacle(img: np.ndarray) -> bool:
+    """장애물 감지 — 미구현, 항상 False."""
+    return False
+
+
+def _detect_risk(person: bool, fallen_object: bool, obstacle: bool) -> str:
+    """위험 수준 판단 — 사람 감지 시 'high', 아니면 'low'."""
+    return "high" if person else "low"
+
+
+def _run_analysis(event_id: int, img: np.ndarray) -> AnalysisRecord:
+    person        = _detect_person(img)
+    fallen_object = _detect_fallen_object(img)
+    obstacle      = _detect_obstacle(img)
+    motion        = person
+    risk          = _detect_risk(person, fallen_object, obstacle)
+
+    parts = []
+    if person:
+        parts.append("사람 감지됨")
+    elif fallen_object:
+        parts.append("낙하물 감지됨")
+    elif obstacle:
+        parts.append("장애물 감지됨")
+    else:
+        parts.append("감지 없음")
+    parts.append("움직임O" if motion else "움직임X")
+
+    return AnalysisRecord(
+        event_id=event_id,
+        person_detected=person,
+        fallen_object_detected=fallen_object,
+        obstacle_detected=obstacle,
+        motion_detected=motion,
+        risk_level=risk,
+        result_summary=", ".join(parts),
+        analyzed_at=datetime.now().isoformat(timespec="milliseconds"),
+    )
+
+
+def _save_analysis(record: AnalysisRecord) -> None:
+    """analysis.jsonl 에 분석 결과 추가 저장."""
+    path  = SAVE_DIR / "analysis.jsonl"
+    entry = {
+        "event_id":               record.event_id,
+        "person_detected":        record.person_detected,
+        "fallen_object_detected": record.fallen_object_detected,
+        "obstacle_detected":      record.obstacle_detected,
+        "motion_detected":        record.motion_detected,
+        "risk_level":             record.risk_level,
+        "result_summary":         record.result_summary,
+        "analyzed_at":            record.analyzed_at,
+    }
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+# 분석 워커 ──────────────────────────────────────────────────────────────────
+def _analysis_worker() -> None:
+    """analysis_queue 에서 프레임을 꺼내 YOLO 추론 후 analysis.jsonl 기록 + analysis_results.db 삽입."""
+    db_path = str(SAVE_DIR / "analysis_results.db")
+    conn    = sqlite3.connect(db_path)
+    while True:
+        frame = analysis_queue.get()
+        if frame is None:
+            continue
+        try:
+            nparr = np.frombuffer(frame.data, dtype=np.uint8)
+            img   = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            if img is None:
+                log.warning("[analysis] imdecode 실패 — event_id=%d", frame.event_id)
+                continue
+            record = _run_analysis(frame.event_id, img)
+            _save_analysis(record)
+            params = (
+                int(record.person_detected), int(record.fallen_object_detected),
+                int(record.obstacle_detected), int(record.motion_detected),
+                record.risk_level, record.result_summary, record.analyzed_at,
+            )
+            db_ok = False
+            for attempt in range(DB_RECONNECT_TRIES):
+                try:
+                    conn.execute(
+                        "INSERT INTO analysis_results "
+                        "(person_detected, fallen_object_detected, obstacle_detected, "
+                        "motion_detected, risk_level, result_summary, analyzed_at) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        params,
+                    )
+                    conn.commit()
+                    db_ok = True
+                    break
+                except sqlite3.Error as exc:
+                    log.warning("[analysis] DB 오류 (시도 %d/%d): %s", attempt + 1, DB_RECONNECT_TRIES, exc)
+                    conn = _reconnect_db(conn, db_path, "analysis")
+            if not db_ok:
+                log.error("[analysis] DB 삽입 %d회 모두 실패 — SSE/latest 업데이트 차단", DB_RECONNECT_TRIES)
+                continue
+            log.info("[analysis] #%d  %s", record.event_id, record.result_summary)
+            entry = {
+                "event_id":               record.event_id,
+                "person_detected":        record.person_detected,
+                "fallen_object_detected": record.fallen_object_detected,
+                "obstacle_detected":      record.obstacle_detected,
+                "motion_detected":        record.motion_detected,
+                "risk_level":             record.risk_level,
+                "result_summary":         record.result_summary,
+                "analyzed_at":            record.analyzed_at,
+            }
+            with _latest_analysis_lock:
+                _latest_analysis.clear()
+                _latest_analysis.update(entry)
+            _sse_push(entry, event_name="analysis")
+        except Exception as exc:
+            log.error("[analysis] 오류 (event_id=%d): %s", frame.event_id, exc)
+
+
 # ── 워커 시작 ─────────────────────────────────────────────────────────────────
 def start_workers() -> list[threading.Thread]:
-    """두 워커 스레드를 데몬으로 시작. 메인 프로세스 종료 시 자동 정리됨."""
+    """워커 스레드를 데몬으로 시작. 메인 프로세스 종료 시 자동 정리됨."""
     SAVE_DIR.mkdir(parents=True, exist_ok=True)
     _init_event_counter()
+    _load_yolo()
     workers = [
-        threading.Thread(target=_gui_worker, name="gui-worker", daemon=True),
-        threading.Thread(target=_db_worker,  name="db-worker",  daemon=True),
+        threading.Thread(target=_gui_worker,      name="gui-worker",      daemon=True),
+        threading.Thread(target=_db_worker,        name="db-worker",       daemon=True),
+        threading.Thread(target=_analysis_worker,  name="analysis-worker", daemon=True),
     ]
     for t in workers:
         t.start()
@@ -275,11 +485,13 @@ _VIEWER_HTML = """<!DOCTYPE html>
     button:hover { background:#1d4ed8; }
     #msg     { margin-top:8px; font-size:0.85em; color:#6ee7b7; min-height:1.2em; }
     #stats   { margin-top:6px; font-size:0.8em; color:#888; }
-    #json-wrap{ margin-top:16px; width:100%; max-width:640px; }
-    #json-label{ font-size:0.78em; color:#6b7280; margin-bottom:4px; }
-    #json-out{ margin:0; padding:14px; background:#0d1117; border:1px solid #333;
-               border-radius:6px; font-size:0.8em; color:#a5f3fc;
-               white-space:pre; overflow-x:auto; min-height:48px; }
+    .json-wrap  { margin-top:16px; width:100%; max-width:640px; }
+    .json-label { font-size:0.78em; color:#6b7280; margin-bottom:4px; }
+    .json-out   { margin:0; padding:14px; background:#0d1117; border:1px solid #333;
+                  border-radius:6px; font-size:0.8em; white-space:pre;
+                  overflow-x:auto; min-height:48px; }
+    #json-out      { color:#a5f3fc; }
+    #analysis-out  { color:#86efac; }
   </style>
 </head>
 <body>
@@ -292,13 +504,17 @@ _VIEWER_HTML = """<!DOCTYPE html>
   <div id="msg"></div>
   <div id="stats">서버: {{ host }}:{{ port }} | 저장: {{ save_dir }}</div>
 
-  <div id="json-wrap">
-    <div id="json-label">최근 촬영 JSON</div>
-    <pre id="json-out">대기 중...</pre>
+  <div class="json-wrap">
+    <div class="json-label">최근 촬영 JSON</div>
+    <pre id="json-out" class="json-out">대기 중...</pre>
+  </div>
+
+  <div class="json-wrap">
+    <div class="json-label">최근 분석 결과 (YOLO)</div>
+    <pre id="analysis-out" class="json-out">대기 중...</pre>
   </div>
 
   <script>
-    let lastEventId = null;
 
     function sendTrigger() {
       const label = document.getElementById('label').value.trim();
@@ -316,7 +532,7 @@ _VIEWER_HTML = """<!DOCTYPE html>
       .catch(e => document.getElementById('msg').textContent = '오류: ' + e);
     }
 
-    // 페이지 최초 로드 시 마지막 레코드 한 번만 가져옴
+    // 페이지 최초 로드 시 마지막 레코드/분석 결과 한 번씩 가져옴
     fetch('/latest')
       .then(r => r.json())
       .then(d => {
@@ -326,12 +542,25 @@ _VIEWER_HTML = """<!DOCTYPE html>
       })
       .catch(() => {});
 
+    fetch('/latest_analysis')
+      .then(r => r.json())
+      .then(d => {
+        if (d.record)
+          document.getElementById('analysis-out').textContent =
+            JSON.stringify(d.record, null, 2);
+      })
+      .catch(() => {});
+
     // 이후 갱신은 서버 푸시(SSE)로만 수행
     const es = new EventSource('/events');
-    es.onmessage = function(e) {
+    es.addEventListener('record', function(e) {
       document.getElementById('json-out').textContent =
         JSON.stringify(JSON.parse(e.data), null, 2);
-    };
+    });
+    es.addEventListener('analysis', function(e) {
+      document.getElementById('analysis-out').textContent =
+        JSON.stringify(JSON.parse(e.data), null, 2);
+    });
   </script>
 </body>
 </html>"""
@@ -368,8 +597,9 @@ def upload():
         log.warning("이미지 검증 실패: %s", err)
         return jsonify(build_response("error", error=err)), 422
 
-    received_at = datetime.now().isoformat(timespec="milliseconds")
-    ts          = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    now = datetime.now()
+    received_at = now.isoformat(timespec="milliseconds")
+    ts          = now.strftime("%Y%m%d_%H%M%S_%f")
 
     captured_at = request.form.get("captured_at") or received_at
     event_type  = request.form.get("event_type") or "motion"   # 기본값: motion
@@ -382,7 +612,7 @@ def upload():
     frame = Frame(
         data=data,
         event_id=_next_event_id(),
-        filename=f"{ts}.jpg",
+        filename=f"{ts}_{frame.event_id}.jpg",
         captured_at=captured_at,
         timestamp=received_at,
         event_type=event_type,
@@ -463,19 +693,37 @@ def latest():
     return jsonify(build_response("ok", record=record)), 200
 
 
+@app.route("/latest_analysis")
+def latest_analysis():
+    """페이지 최초 로드 시 사용 — 가장 마지막 분석 결과를 반환."""
+    with _latest_analysis_lock:
+        record = dict(_latest_analysis)
+    if not record:
+        return jsonify(build_response("ok", record=None)), 200
+    return jsonify(build_response("ok", record=record)), 200
+
+
 def _sse_generator(q: queue.Queue):
-    """이미지 저장 완료 시 레코드를 SSE 형식으로 스트리밍."""
+    """이미지 저장/분석 완료 시 레코드를 SSE 형식으로 스트리밍."""
     try:
         while True:
             try:
-                record = q.get(timeout=25)
-                yield f"data: {json.dumps(record, ensure_ascii=False)}\n\n"
+                record, event_name = q.get(timeout=25)
+                data_line = f"data: {json.dumps(record, ensure_ascii=False)}\n"
+                if event_name:
+                    yield f"event: {event_name}\n{data_line}\n"
+                else:
+                    yield f"{data_line}\n"
             except queue.Empty:
-                yield ": heartbeat\n\n"   # 연결 유지용 주석 이벤트
+                yield ": heartbeat\n\n"
+    except GeneratorExit:
+        pass  # 클라이언트 정상 종료
     finally:
         with _sse_lock:
-            if q in _sse_clients:
+            try:
                 _sse_clients.remove(q)
+            except ValueError:
+                pass
 
 
 @app.route("/events")

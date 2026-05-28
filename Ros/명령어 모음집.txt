@@ -2,5 +2,13 @@ cd ~/ros2_ws/src/slam/maps && ros2 run nav2_map_server map_saver_cli -f map_01 -
 - 2D 라이더 맵 저장 명령어
 
 ros2 service call /publish_map rtabmap_msgs/srv/PublishMap "{global_map: true, optimized: true, graph_only: false}"
-- 3D 매핑 재발행하는 명령어.
+- 3D 매핑 재발행하는 명령어.(ros2 launch slam rviz_rtabmap.launch.py 를 실행하는 상태여야 함.)
+
+
+저장한 2D 맵 보는 법
+ros2 run nav2_util lifecycle_bringup map_server
+- 2D 맵 전송 서버 실행
+
+ros2 run nav2_map_server map_server --ros-args -p yaml_filename:=$HOME/ros2_ws/src/slam/maps/map_01.yaml
+- 2D 맵 전송 명령어(위의 서버 명령어가 실행 상태여야 함.)
 

@@ -30,3 +30,4 @@ mission_coordinator:
     auto_resume: false
     auto_patrol: false
     patrol_command: forward
+    use_arm_pose_commands: false

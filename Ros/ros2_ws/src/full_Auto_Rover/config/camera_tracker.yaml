@@ -11,15 +11,15 @@ event_camera_tracker:
     yaw_gain: 0.08
     pitch_gain: 0.08
     control_period_sec: 0.1
-    max_yaw_step: 8
-    max_pitch_step: 5
-    align_stable_count: 5
-    target_timeout_sec: 2.0
+    max_yaw_step: 18
+    max_pitch_step: 10
+    align_stable_count: 2
+    target_timeout_sec: 8.0
     scan_enabled: true
-    scan_interval_sec: 1.2
+    scan_interval_sec: 0.1
     scan_yaw_positions: [250, 375, 500, 625, 750]
     scan_pitch: 150
-    scan_step: 10
+    scan_step: 25
 
 snapshot_sender:
   ros__parameters:

@@ -18,6 +18,7 @@ class MissionCoordinator(Node):
         self.declare_parameter('auto_resume', False)
         self.declare_parameter('auto_patrol', False)
         self.declare_parameter('patrol_command', 'forward')
+        self.declare_parameter('use_arm_pose_commands', False)
 
         self.last_event = ''
         self.last_capture_time = 0.0
@@ -59,14 +60,16 @@ class MissionCoordinator(Node):
             return
         self.last_event = msg.data
         self.publish(self.motion_pub, 'stop')
-        self.publish(self.arm_pub, 'event_focus')
+        if bool(self.get_parameter('use_arm_pose_commands').value):
+            self.publish(self.arm_pub, 'event_focus')
         self.get_logger().info('event detected: %s' % msg.data)
 
     def aligned_callback(self, msg):
         if not msg.data:
             return
         self.last_capture_time = time.time()
-        self.publish(self.arm_pub, 'photo_pose')
+        if bool(self.get_parameter('use_arm_pose_commands').value):
+            self.publish(self.arm_pub, 'photo_pose')
         self.publish(self.capture_pub, self.last_event or 'event_aligned')
 
     def timer_callback(self):
@@ -81,7 +84,8 @@ class MissionCoordinator(Node):
         if time.time() - self.last_capture_time >= delay:
             self.last_capture_time = 0.0
             self.last_event = ''
-            self.publish(self.arm_pub, 'camera_ready')
+            if bool(self.get_parameter('use_arm_pose_commands').value):
+                self.publish(self.arm_pub, 'camera_ready')
             self.publish(self.motion_pub, 'resume')
 
     def publish(self, publisher, value):

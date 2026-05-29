@@ -100,7 +100,7 @@ class DangerEventDetector(Node):
             return 'weapon_detected:%s' % normalized_class_name(weapons[0].class_name), box_center(weapons[0].box)
 
         if persons:
-            center = box_center(persons[0].box)
+            center = self.person_focus_center(persons[0].box)
             if center is not None:
                 return 'person_detected', center
         return None
@@ -164,6 +164,16 @@ class DangerEventDetector(Node):
         width = max(1, x2 - x1)
         height = max(1, y2 - y1)
         return (width / height) >= float(self.get_parameter('fallen_person_aspect_ratio').value)
+
+    def person_focus_center(self, box):
+        x1, y1, x2, y2 = box[:4]
+        center_x = int((x1 + x2) / 2)
+        height = max(1, y2 - y1)
+        if y1 < 10:
+            center_y = int(y1 + height / 4)
+        else:
+            center_y = int(y1 + height / 3)
+        return center_x, center_y
 
     def valid_box(self, box):
         if len(box) < 4:

@@ -12,6 +12,8 @@
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>interfaces</exec_depend>
+  <exec_depend>kinematics</exec_depend>
+  <exec_depend>kinematics_msgs</exec_depend>
   <exec_depend>servo_controller_msgs</exec_depend>
   <exec_depend>servo_controller</exec_depend>
 

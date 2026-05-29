@@ -13,10 +13,12 @@ def launch_setup(context):
         full_auto_path = get_package_share_directory('full_auto_rover')
         peripherals_path = get_package_share_directory('peripherals')
         controller_path = get_package_share_directory('controller')
+        kinematics_path = get_package_share_directory('kinematics')
     else:
         full_auto_path = '/home/ubuntu/ros2_ws/src/full_Auto_Rover'
         peripherals_path = '/home/ubuntu/ros2_ws/src/peripherals'
         controller_path = '/home/ubuntu/ros2_ws/src/driver/controller'
+        kinematics_path = '/home/ubuntu/ros2_ws/src/driver/kinematics'
 
     event_config = os.path.join(full_auto_path, 'config/event_rules.yaml')
     tracker_config = os.path.join(full_auto_path, 'config/camera_tracker.yaml')
@@ -27,9 +29,15 @@ def launch_setup(context):
         nodes.append(IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(controller_path, 'launch/controller.launch.py'))))
 
+    if LaunchConfiguration('start_kinematics').perform(context).lower() == 'true':
+        nodes.append(IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(os.path.join(kinematics_path, 'launch/kinematics_node.launch.py'))))
+
     if LaunchConfiguration('start_camera').perform(context).lower() == 'true':
         nodes.append(IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(peripherals_path, 'launch/depth_camera.launch.py'))))
+
+    start_arm_controller = LaunchConfiguration('start_arm_controller').perform(context).lower() == 'true'
 
     nodes.extend([
         Node(
@@ -64,17 +72,18 @@ def launch_setup(context):
         ),
         Node(
             package='full_auto_rover',
-            executable='arm_controller',
-            output='screen',
-            parameters=[control_config],
-        ),
-        Node(
-            package='full_auto_rover',
             executable='mission_coordinator',
             output='screen',
             parameters=[control_config],
         ),
     ])
+    if start_arm_controller:
+        nodes.append(Node(
+            package='full_auto_rover',
+            executable='arm_controller',
+            output='screen',
+            parameters=[control_config],
+        ))
     return nodes
 
 
@@ -82,5 +91,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('start_camera', default_value='true'),
         DeclareLaunchArgument('start_controller', default_value='true'),
+        DeclareLaunchArgument('start_kinematics', default_value='true'),
+        DeclareLaunchArgument('start_arm_controller', default_value='false'),
         OpaqueFunction(function=launch_setup),
     ])

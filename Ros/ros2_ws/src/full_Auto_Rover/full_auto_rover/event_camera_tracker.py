@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
+import threading
 import time
 
 import rclpy
-from rclpy.node import Node
-from std_msgs.msg import Bool
 from interfaces.msg import Point2D
+from kinematics import transform
+from kinematics.kinematics_control import set_pose_target
+from kinematics_msgs.srv import SetRobotPose
+from rclpy.node import Node
 from servo_controller.bus_servo_control import set_servo_position
 from servo_controller_msgs.msg import ServosPosition
+from std_msgs.msg import Bool
 
 from full_auto_rover.utils import clamp
 
@@ -17,30 +21,37 @@ class EventCameraTracker(Node):
         self.declare_parameter('event_center_topic', '/full_auto_rover/event_center')
         self.declare_parameter('aligned_topic', '/full_auto_rover/event_aligned')
         self.declare_parameter('servo_topic', '/servo_controller')
-        self.declare_parameter('yaw_servo_id', 1)
-        self.declare_parameter('pitch_servo_id', 4)
+        self.declare_parameter('kinematics_service', '/kinematics/set_pose_target')
         self.declare_parameter('initial_yaw', 500)
-        self.declare_parameter('initial_pitch', 150)
-        self.declare_parameter('min_yaw', 0)
-        self.declare_parameter('max_yaw', 1000)
-        self.declare_parameter('min_pitch', 100)
-        self.declare_parameter('max_pitch', 720)
+        self.declare_parameter('initial_z', 0.41)
+        self.declare_parameter('min_yaw', 200)
+        self.declare_parameter('max_yaw', 800)
+        self.declare_parameter('min_z', 0.36)
+        self.declare_parameter('max_z', 0.46)
+        self.declare_parameter('x_offset', 0.0)
+        self.declare_parameter('y_offset', 0.0)
+        self.declare_parameter('target_pitch', 0.0)
+        self.declare_parameter('pitch_range', [-180.0, 180.0])
+        self.declare_parameter('pitch_resolution', 1.0)
         self.declare_parameter('center_tolerance_px', 25)
-        self.declare_parameter('yaw_gain', 0.08)
-        self.declare_parameter('pitch_gain', 0.08)
-        self.declare_parameter('control_period_sec', 0.1)
-        self.declare_parameter('max_yaw_step', 8)
-        self.declare_parameter('max_pitch_step', 5)
-        self.declare_parameter('align_stable_count', 5)
-        self.declare_parameter('target_timeout_sec', 2.0)
-        self.declare_parameter('scan_enabled', True)
-        self.declare_parameter('scan_interval_sec', 1.2)
+        self.declare_parameter('yaw_gain', 0.04)
+        self.declare_parameter('z_gain', 0.00005)
+        self.declare_parameter('control_period_sec', 0.02)
+        self.declare_parameter('max_yaw_step', 12)
+        self.declare_parameter('max_z_step', 0.006)
+        self.declare_parameter('align_stable_count', 2)
+        self.declare_parameter('target_timeout_sec', 8.0)
+        self.declare_parameter('scan_enabled', False)
+        self.declare_parameter('scan_interval_sec', 0.02)
         self.declare_parameter('scan_yaw_positions', [250, 375, 500, 625, 750])
-        self.declare_parameter('scan_pitch', 150)
-        self.declare_parameter('scan_step', 10)
+        self.declare_parameter('scan_z', 0.41)
+        self.declare_parameter('scan_step', 8)
+        self.declare_parameter('publish_servo_commands', True)
 
         self.yaw = int(self.get_parameter('initial_yaw').value)
-        self.pitch = int(self.get_parameter('initial_pitch').value)
+        self.z = float(self.get_parameter('initial_z').value)
+        self.x = transform.link3 + transform.tool_link + float(self.get_parameter('x_offset').value)
+        self.y = float(self.get_parameter('y_offset').value)
         self.target = None
         self.last_target_time = 0.0
         self.aligned_count = 0
@@ -49,30 +60,54 @@ class EventCameraTracker(Node):
         self.scan_direction = 1
         self.last_scan_time = 0.0
 
-        servo_topic = self.get_parameter('servo_topic').value
-        center_topic = self.get_parameter('event_center_topic').value
-        aligned_topic = self.get_parameter('aligned_topic').value
+        self.servo_pub = self.create_publisher(
+            ServosPosition,
+            self.get_parameter('servo_topic').value,
+            1,
+        )
+        self.aligned_pub = self.create_publisher(
+            Bool,
+            self.get_parameter('aligned_topic').value,
+            1,
+        )
+        self.kinematics_client = self.create_client(
+            SetRobotPose,
+            self.get_parameter('kinematics_service').value,
+        )
+        self.wait_for_kinematics()
 
-        self.servo_pub = self.create_publisher(ServosPosition, servo_topic, 1)
-        self.aligned_pub = self.create_publisher(Bool, aligned_topic, 1)
-        self.create_subscription(Point2D, center_topic, self.center_callback, 1)
-        self.create_timer(float(self.get_parameter('control_period_sec').value), self.control_callback)
-
-        self.publish_servo(1.0)
+        self.create_subscription(
+            Point2D,
+            self.get_parameter('event_center_topic').value,
+            self.center_callback,
+            1,
+        )
+        self.worker = threading.Thread(target=self.control_loop, daemon=True)
+        self.worker.start()
         self.get_logger().info('event_camera_tracker started')
+
+    def wait_for_kinematics(self):
+        while rclpy.ok() and not self.kinematics_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('waiting for kinematics service')
 
     def center_callback(self, msg):
         self.target = msg
         self.last_target_time = time.time()
         self.last_aligned = False
 
-    def control_callback(self):
-        if self.has_recent_target():
-            self.track_target()
-        else:
-            self.aligned_count = 0
-            self.last_aligned = False
-            self.scan()
+    def control_loop(self):
+        while rclpy.ok():
+            start_time = time.time()
+            if self.has_recent_target():
+                self.track_target()
+            else:
+                self.aligned_count = 0
+                self.last_aligned = False
+                self.scan()
+
+            period = float(self.get_parameter('control_period_sec').value)
+            elapsed = time.time() - start_time
+            time.sleep(max(0.001, period - elapsed))
 
     def has_recent_target(self):
         if self.target is None:
@@ -97,19 +132,28 @@ class EventCameraTracker(Node):
 
         self.aligned_count = 0
         self.publish_aligned(False)
+        self.update_pose(error_x, error_y)
+        self.publish_pose(float(self.get_parameter('control_period_sec').value))
 
-        yaw_gain = float(self.get_parameter('yaw_gain').value)
-        pitch_gain = float(self.get_parameter('pitch_gain').value)
-        yaw_delta = self.limited_step(error_x * yaw_gain, int(self.get_parameter('max_yaw_step').value))
-        pitch_delta = self.limited_step(error_y * pitch_gain, int(self.get_parameter('max_pitch_step').value))
-
-        self.yaw = int(clamp(self.yaw + yaw_delta,
-                             int(self.get_parameter('min_yaw').value),
-                             int(self.get_parameter('max_yaw').value)))
-        self.pitch = int(clamp(self.pitch + pitch_delta,
-                               int(self.get_parameter('min_pitch').value),
-                               int(self.get_parameter('max_pitch').value)))
-        self.publish_servo(float(self.get_parameter('control_period_sec').value))
+    def update_pose(self, error_x, error_y):
+        yaw_delta = self.limited_step(
+            error_x * float(self.get_parameter('yaw_gain').value),
+            int(self.get_parameter('max_yaw_step').value),
+        )
+        z_delta = self.limited_float_step(
+            error_y * float(self.get_parameter('z_gain').value),
+            float(self.get_parameter('max_z_step').value),
+        )
+        self.yaw = int(clamp(
+            self.yaw + yaw_delta,
+            int(self.get_parameter('min_yaw').value),
+            int(self.get_parameter('max_yaw').value),
+        ))
+        self.z = float(clamp(
+            self.z + z_delta,
+            float(self.get_parameter('min_z').value),
+            float(self.get_parameter('max_z').value),
+        ))
 
     def scan(self):
         if not bool(self.get_parameter('scan_enabled').value):
@@ -125,22 +169,21 @@ class EventCameraTracker(Node):
             return
 
         target_yaw = scan_positions[self.scan_index]
-        target_pitch = int(self.get_parameter('scan_pitch').value)
-        step = int(self.get_parameter('scan_step').value)
+        target_z = float(self.get_parameter('scan_z').value)
         moved = False
 
-        next_yaw = self.move_toward(self.yaw, target_yaw, step)
+        next_yaw = self.move_toward(self.yaw, target_yaw, int(self.get_parameter('scan_step').value))
         if next_yaw != self.yaw:
             self.yaw = next_yaw
             moved = True
 
-        next_pitch = self.move_toward(self.pitch, target_pitch, step)
-        if next_pitch != self.pitch:
-            self.pitch = next_pitch
+        next_z = self.move_float_toward(self.z, target_z, float(self.get_parameter('max_z_step').value))
+        if next_z != self.z:
+            self.z = next_z
             moved = True
 
         if moved:
-            self.publish_servo(float(self.get_parameter('scan_interval_sec').value))
+            self.publish_pose(float(self.get_parameter('scan_interval_sec').value))
             return
 
         if self.scan_index == len(scan_positions) - 1:
@@ -148,6 +191,36 @@ class EventCameraTracker(Node):
         elif self.scan_index == 0:
             self.scan_direction = 1
         self.scan_index += self.scan_direction
+
+    def publish_pose(self, duration):
+        if not bool(self.get_parameter('publish_servo_commands').value):
+            return
+
+        request = set_pose_target(
+            [self.x, self.y, self.z],
+            float(self.get_parameter('target_pitch').value),
+            [float(value) for value in self.get_parameter('pitch_range').value],
+            float(self.get_parameter('pitch_resolution').value),
+        )
+        future = self.kinematics_client.call_async(request)
+        deadline = time.time() + 0.2
+        while rclpy.ok() and not future.done() and time.time() < deadline:
+            time.sleep(0.005)
+        if not future.done() or future.result() is None:
+            self.get_logger().warn('kinematics request timed out')
+            return
+
+        result = future.result()
+        if not result.success or not result.pulse:
+            self.get_logger().warn('kinematics has no valid solution')
+            return
+
+        servo_data = result.pulse
+        set_servo_position(
+            self.servo_pub,
+            duration,
+            ((10, 500), (5, 500), (4, servo_data[3]), (3, servo_data[2]), (2, servo_data[1]), (1, int(self.yaw))),
+        )
 
     def publish_aligned(self, aligned):
         if aligned == self.last_aligned and not aligned:
@@ -162,15 +235,18 @@ class EventCameraTracker(Node):
     def limited_step(self, value, limit):
         return int(clamp(value, -limit, limit))
 
+    def limited_float_step(self, value, limit):
+        return float(clamp(value, -limit, limit))
+
     def move_toward(self, current, target, step):
         if abs(target - current) <= step:
             return target
         return current + step if target > current else current - step
 
-    def publish_servo(self, duration):
-        yaw_id = int(self.get_parameter('yaw_servo_id').value)
-        pitch_id = int(self.get_parameter('pitch_servo_id').value)
-        set_servo_position(self.servo_pub, duration, ((yaw_id, self.yaw), (pitch_id, self.pitch)))
+    def move_float_toward(self, current, target, step):
+        if abs(target - current) <= step:
+            return target
+        return current + step if target > current else current - step
 
 
 def main():

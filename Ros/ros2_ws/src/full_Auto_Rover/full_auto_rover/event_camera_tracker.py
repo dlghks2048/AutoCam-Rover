@@ -10,16 +10,22 @@ from kinematics_msgs.srv import SetRobotPose
 from rclpy.node import Node
 from servo_controller.bus_servo_control import set_servo_position
 from servo_controller_msgs.msg import ServosPosition
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, String
 
 from full_auto_rover.utils import clamp
 
 
 class EventCameraTracker(Node):
+    SCANNING = 'scanning'
+    TRACKING = 'tracking'
+    CAPTURING = 'capturing'
+    RETURNING = 'returning'
+
     def __init__(self):
         super().__init__('event_camera_tracker')
         self.declare_parameter('event_center_topic', '/full_auto_rover/event_center')
         self.declare_parameter('aligned_topic', '/full_auto_rover/event_aligned')
+        self.declare_parameter('snapshot_status_topic', '/full_auto_rover/snapshot_status')
         self.declare_parameter('servo_topic', '/servo_controller')
         self.declare_parameter('kinematics_service', '/kinematics/set_pose_target')
         self.declare_parameter('initial_yaw', 500)
@@ -41,19 +47,26 @@ class EventCameraTracker(Node):
         self.declare_parameter('max_z_step', 0.006)
         self.declare_parameter('align_stable_count', 2)
         self.declare_parameter('target_timeout_sec', 8.0)
-        self.declare_parameter('scan_enabled', False)
+        self.declare_parameter('capture_timeout_sec', 5.0)
+        self.declare_parameter('return_tolerance_yaw', 4)
+        self.declare_parameter('return_tolerance_z', 0.004)
+        self.declare_parameter('scan_enabled', True)
         self.declare_parameter('scan_interval_sec', 0.02)
-        self.declare_parameter('scan_yaw_positions', [250, 375, 500, 625, 750])
+        self.declare_parameter('scan_yaw_positions', [200, 300, 400, 500, 600, 700, 800])
         self.declare_parameter('scan_z', 0.41)
         self.declare_parameter('scan_step', 8)
         self.declare_parameter('publish_servo_commands', True)
 
-        self.yaw = int(self.get_parameter('initial_yaw').value)
-        self.z = float(self.get_parameter('initial_z').value)
+        self.home_yaw = int(self.get_parameter('initial_yaw').value)
+        self.home_z = float(self.get_parameter('initial_z').value)
+        self.yaw = self.home_yaw
+        self.z = self.home_z
         self.x = transform.link3 + transform.tool_link + float(self.get_parameter('x_offset').value)
         self.y = float(self.get_parameter('y_offset').value)
+        self.state = self.SCANNING
         self.target = None
         self.last_target_time = 0.0
+        self.capture_start_time = 0.0
         self.aligned_count = 0
         self.last_aligned = False
         self.scan_index = 0
@@ -82,6 +95,12 @@ class EventCameraTracker(Node):
             self.center_callback,
             1,
         )
+        self.create_subscription(
+            String,
+            self.get_parameter('snapshot_status_topic').value,
+            self.snapshot_status_callback,
+            10,
+        )
         self.worker = threading.Thread(target=self.control_loop, daemon=True)
         self.worker.start()
         self.get_logger().info('event_camera_tracker started')
@@ -91,19 +110,37 @@ class EventCameraTracker(Node):
             self.get_logger().info('waiting for kinematics service')
 
     def center_callback(self, msg):
+        if self.state not in (self.SCANNING, self.TRACKING):
+            return
+        if self.state == self.SCANNING:
+            self.state = self.TRACKING
+            self.aligned_count = 0
+            self.publish_aligned(False)
+            self.get_logger().info('event target locked; tracking started')
         self.target = msg
         self.last_target_time = time.time()
         self.last_aligned = False
 
+    def snapshot_status_callback(self, msg):
+        if self.state != self.CAPTURING:
+            return
+        if msg.data.startswith('saved:'):
+            self.get_logger().info('snapshot saved; returning to scan pose')
+            self.start_returning()
+
     def control_loop(self):
         while rclpy.ok():
             start_time = time.time()
-            if self.has_recent_target():
-                self.track_target()
-            else:
-                self.aligned_count = 0
-                self.last_aligned = False
+            if self.state == self.SCANNING:
                 self.scan()
+            elif self.state == self.TRACKING:
+                self.track_target()
+            elif self.state == self.CAPTURING:
+                self.wait_for_capture()
+            elif self.state == self.RETURNING:
+                self.return_home()
+            else:
+                self.state = self.SCANNING
 
             period = float(self.get_parameter('control_period_sec').value)
             elapsed = time.time() - start_time
@@ -116,6 +153,11 @@ class EventCameraTracker(Node):
         return time.time() - self.last_target_time <= timeout
 
     def track_target(self):
+        if not self.has_recent_target():
+            self.get_logger().info('event target lost; returning to scan pose')
+            self.start_returning()
+            return
+
         msg = self.target
         target_x = msg.width / 2.0
         target_y = msg.height / 2.0
@@ -128,12 +170,28 @@ class EventCameraTracker(Node):
             self.aligned_count += 1
             if self.aligned_count >= int(self.get_parameter('align_stable_count').value):
                 self.publish_aligned(True)
+                self.state = self.CAPTURING
+                self.capture_start_time = time.time()
+                self.get_logger().info('event centered; waiting for snapshot')
             return
 
         self.aligned_count = 0
         self.publish_aligned(False)
         self.update_pose(error_x, error_y)
         self.publish_pose(float(self.get_parameter('control_period_sec').value))
+
+    def wait_for_capture(self):
+        timeout = float(self.get_parameter('capture_timeout_sec').value)
+        if time.time() - self.capture_start_time >= timeout:
+            self.get_logger().warn('snapshot status timeout; returning to scan pose')
+            self.start_returning()
+
+    def start_returning(self):
+        self.state = self.RETURNING
+        self.target = None
+        self.last_target_time = 0.0
+        self.aligned_count = 0
+        self.publish_aligned(False)
 
     def update_pose(self, error_x, error_y):
         yaw_delta = self.limited_step(
@@ -192,6 +250,29 @@ class EventCameraTracker(Node):
             self.scan_direction = 1
         self.scan_index += self.scan_direction
 
+    def return_home(self):
+        moved = False
+        next_yaw = self.move_toward(self.yaw, self.home_yaw, int(self.get_parameter('scan_step').value))
+        if next_yaw != self.yaw:
+            self.yaw = next_yaw
+            moved = True
+
+        next_z = self.move_float_toward(self.z, self.home_z, float(self.get_parameter('max_z_step').value))
+        if next_z != self.z:
+            self.z = next_z
+            moved = True
+
+        self.publish_pose(float(self.get_parameter('scan_interval_sec').value))
+
+        yaw_ready = abs(self.yaw - self.home_yaw) <= int(self.get_parameter('return_tolerance_yaw').value)
+        z_ready = abs(self.z - self.home_z) <= float(self.get_parameter('return_tolerance_z').value)
+        if not moved or (yaw_ready and z_ready):
+            self.yaw = self.home_yaw
+            self.z = self.home_z
+            self.state = self.SCANNING
+            self.scan_index = self.closest_scan_index(self.home_yaw)
+            self.get_logger().info('scan pose restored; scanning resumed')
+
     def publish_pose(self, duration):
         if not bool(self.get_parameter('publish_servo_commands').value):
             return
@@ -231,6 +312,12 @@ class EventCameraTracker(Node):
         self.aligned_pub.publish(out)
         if aligned:
             self.get_logger().info('event centered; capture allowed')
+
+    def closest_scan_index(self, yaw):
+        scan_positions = [int(value) for value in self.get_parameter('scan_yaw_positions').value]
+        if not scan_positions:
+            return 0
+        return min(range(len(scan_positions)), key=lambda index: abs(scan_positions[index] - yaw))
 
     def limited_step(self, value, limit):
         return int(clamp(value, -limit, limit))

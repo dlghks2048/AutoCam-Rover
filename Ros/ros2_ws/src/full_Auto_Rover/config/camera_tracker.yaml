@@ -2,6 +2,7 @@ event_camera_tracker:
   ros__parameters:
     event_center_topic: /full_auto_rover/event_center
     aligned_topic: /full_auto_rover/event_aligned
+    snapshot_status_topic: /full_auto_rover/snapshot_status
     servo_topic: /servo_controller
     kinematics_service: /kinematics/set_pose_target
     initial_yaw: 500
@@ -23,9 +24,12 @@ event_camera_tracker:
     max_z_step: 0.006
     align_stable_count: 2
     target_timeout_sec: 8.0
-    scan_enabled: false
+    capture_timeout_sec: 5.0
+    return_tolerance_yaw: 4
+    return_tolerance_z: 0.004
+    scan_enabled: true
     scan_interval_sec: 0.02
-    scan_yaw_positions: [250, 375, 500, 625, 750]
+    scan_yaw_positions: [200, 300, 400, 500, 600, 700, 800]
     scan_z: 0.41
     scan_step: 8
     publish_servo_commands: true

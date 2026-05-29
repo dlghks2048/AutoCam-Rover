@@ -17,5 +17,5 @@ snapshot_sender:
     aligned_topic: /full_auto_rover/event_aligned
     capture_trigger_topic: /full_auto_rover/capture_request
     snapshot_status_topic: /full_auto_rover/snapshot_status
-    save_dir: /tmp/full_auto_rover
+    save_dir: /home/ubuntu/ros2_ws/src/full_Auto_Rover/saved_images
     cooldown_sec: 3.0

@@ -26,6 +26,7 @@ setup(
             'danger_event_detector = full_auto_rover.danger_event_detector:main',
             'event_camera_tracker = full_auto_rover.event_camera_tracker:main',
             'snapshot_sender = full_auto_rover.snapshot_sender:main',
+            'yolo_object_detector = full_auto_rover.yolo_object_detector:main',
             'motion_controller = full_auto_rover.motion_controller:main',
             'arm_controller = full_auto_rover.arm_controller:main',
             'mission_coordinator = full_auto_rover.mission_coordinator:main',

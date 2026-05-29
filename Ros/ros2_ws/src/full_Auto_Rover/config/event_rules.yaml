@@ -1,10 +1,23 @@
+yolo_object_detector:
+  ros__parameters:
+    image_topic: /depth_cam/rgb/image_raw
+    object_topic: /yolov5/object_detect
+    yolov5_dir: /home/ubuntu/third_party_ros2/yolov5
+    model_path: /home/ubuntu/third_party_ros2/yolov5/yolov5n.pt
+    device: cpu
+    image_size: 640
+    conf_threshold: 0.35
+    iou_threshold: 0.45
+    max_detections: 20
+    process_every_n_frames: 3
+
 danger_event_detector:
   ros__parameters:
     object_topic: /yolov5/object_detect
     event_center_topic: /full_auto_rover/event_center
     event_status_topic: /full_auto_rover/event_status
     image_width: 640
-    image_height: 480
+    image_height: 360
     min_score: 0.45
     near_iou_threshold: 0.05
     near_center_distance_px: 170

@@ -40,6 +40,7 @@ class SnapshotSender(Node):
     def capture_callback(self, msg):
         if self.latest_image is None:
             self.publish_status('no_image:%s' % msg.data)
+            self.get_logger().warn('capture skipped; no image received yet: %s' % msg.data)
             return
         self.try_save_snapshot(msg.data or 'capture_request')
 
@@ -48,6 +49,7 @@ class SnapshotSender(Node):
         cooldown = float(self.get_parameter('cooldown_sec').value)
         if now - self.last_save_time < cooldown:
             self.publish_status('cooldown:%s' % reason)
+            self.get_logger().info('capture skipped by cooldown: %s' % reason)
             return
         self.last_save_time = now
         path = self.save_snapshot(self.latest_image)

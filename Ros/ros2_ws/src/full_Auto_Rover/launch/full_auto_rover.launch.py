@@ -34,6 +34,12 @@ def launch_setup(context):
     nodes.extend([
         Node(
             package='full_auto_rover',
+            executable='yolo_object_detector',
+            output='screen',
+            parameters=[event_config],
+        ),
+        Node(
+            package='full_auto_rover',
             executable='danger_event_detector',
             output='screen',
             parameters=[event_config],

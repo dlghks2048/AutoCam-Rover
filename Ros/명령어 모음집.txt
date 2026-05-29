@@ -24,3 +24,18 @@ ros2 run nav2_util lifecycle_bringup map_server
 ros2 run nav2_map_server map_server --ros-args -p yaml_filename:=$HOME/ros2_ws/src/slam/maps/map_01.yaml
 - 2D 맵 전송 명령어(위의 서버 명령어가 실행 상태여야 함.)
 
+
+###카메라 관련###
+/home/ubuntu/ros2_ws/src/full_Auto_Rover/saved_images - 사진 저장 위치
+
+ros2 topic echo /full_auto_rover/event_status
+ros2 topic echo /full_auto_rover/event_center
+ros2 topic echo /full_auto_rover/event_aligned 
+-> 확인 명령어
+
+cd /home/ubuntu/ros2_ws
+source /opt/ros/humble/setup.zsh
+source install/setup.zsh
+ros2 launch full_auto_rover full_auto_rover.launch.py -> 실행 명령어(위 세개는 코드 수정 시만)
+
+

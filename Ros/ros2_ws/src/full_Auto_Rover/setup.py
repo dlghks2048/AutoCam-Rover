@@ -30,6 +30,7 @@ setup(
             'motion_controller = full_auto_rover.motion_controller:main',
             'arm_controller = full_auto_rover.arm_controller:main',
             'mission_coordinator = full_auto_rover.mission_coordinator:main',
+            'danger_scan_node = full_auto_rover.danger_scan_node:main',
         ],
     },
 )

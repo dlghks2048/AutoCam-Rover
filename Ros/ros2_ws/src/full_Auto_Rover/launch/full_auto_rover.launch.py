@@ -23,6 +23,7 @@ def launch_setup(context):
     event_config = os.path.join(full_auto_path, 'config/event_rules.yaml')
     tracker_config = os.path.join(full_auto_path, 'config/camera_tracker.yaml')
     control_config = os.path.join(full_auto_path, 'config/robot_control.yaml')
+    scan_config = os.path.join(full_auto_path, 'config/danger_scan.yaml')
 
     nodes = []
     if LaunchConfiguration('start_controller').perform(context).lower() == 'true':
@@ -38,6 +39,16 @@ def launch_setup(context):
             PythonLaunchDescriptionSource(os.path.join(peripherals_path, 'launch/depth_camera.launch.py'))))
 
     start_arm_controller = LaunchConfiguration('start_arm_controller').perform(context).lower() == 'true'
+    legacy_pipeline = LaunchConfiguration('legacy_pipeline').perform(context).lower() == 'true'
+
+    if not legacy_pipeline:
+        nodes.append(Node(
+            package='full_auto_rover',
+            executable='danger_scan_node',
+            output='screen',
+            parameters=[scan_config],
+        ))
+        return nodes
 
     nodes.extend([
         Node(
@@ -93,5 +104,6 @@ def generate_launch_description():
         DeclareLaunchArgument('start_controller', default_value='true'),
         DeclareLaunchArgument('start_kinematics', default_value='true'),
         DeclareLaunchArgument('start_arm_controller', default_value='false'),
+        DeclareLaunchArgument('legacy_pipeline', default_value='false'),
         OpaqueFunction(function=launch_setup),
     ])

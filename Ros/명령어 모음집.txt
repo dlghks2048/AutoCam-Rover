@@ -27,6 +27,11 @@ ros2 run nav2_map_server map_server --ros-args -p yaml_filename:=$HOME/ros2_ws/s
 
 ###카메라 관련###
 /home/ubuntu/ros2_ws/src/full_Auto_Rover/saved_images - 사진 저장 위치
+ssh hiwonder@192.168.0.10 "rm -rf /tmp/full_auto_rover_images && docker cp jetrover:/home/ubuntu/ros2_ws/src/full_Auto_Rover/saved_images /tmp/full_auto_rover_images"
+scp -r hiwonder@192.168.0.10:/tmp/full_auto_rover_images C:\github\AutoCam-Rover\Ros\ros2_ws\full_auto_rover_images - 사진 가져오기 명령어
+C:\github\AutoCam-Rover\Ros\ros2_ws\full_auto_rover_images - 가져온 위치(조이환 노트북 기준)
+
+rm -f /home/ubuntu/ros2_ws/src/full_Auto_Rover/saved_images/* - 환경안 이미지 지우기
 
 ros2 topic echo /full_auto_rover/event_status
 ros2 topic echo /full_auto_rover/event_center

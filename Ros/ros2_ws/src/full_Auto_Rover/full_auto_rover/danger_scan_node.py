@@ -12,6 +12,7 @@ from kinematics import transform
 from kinematics.kinematics_control import set_pose_target
 from kinematics_msgs.srv import SetRobotPose
 from rclpy.node import Node
+from ros_robot_controller_msgs.msg import BusServoState, SetBusServoState
 from sensor_msgs.msg import Image
 from servo_controller.bus_servo_control import set_servo_position
 from servo_controller_msgs.msg import ServosPosition
@@ -29,9 +30,11 @@ class DangerScanNode(Node):
         super().__init__('danger_scan_node')
         self.declare_parameter('image_topic', '/depth_cam/rgb/image_raw')
         self.declare_parameter('servo_topic', '/servo_controller')
+        self.declare_parameter('bus_servo_state_topic', '/ros_robot_controller/bus_servo/set_state')
         self.declare_parameter('cmd_vel_topic', '/controller/cmd_vel')
         self.declare_parameter('kinematics_service', '/kinematics/set_pose_target')
         self.declare_parameter('status_topic', '/full_auto_rover/scan_status')
+        self.declare_parameter('shutdown_command_topic', '/full_auto_rover/shutdown_command')
         self.declare_parameter('save_dir', '/home/ubuntu/ros2_ws/src/full_Auto_Rover/saved_images')
 
         self.declare_parameter('yolov5_dir', '/home/ubuntu/third_party_ros2/yolov5')
@@ -68,7 +71,10 @@ class DangerScanNode(Node):
         self.declare_parameter('publish_wrist_servo', False)
         self.declare_parameter('gripper_servo_position', 500)
         self.declare_parameter('wrist_servo_position', 500)
-
+        self.declare_parameter('shutdown_yaw', 500)
+        self.declare_parameter('shutdown_z', 0.41)
+        self.declare_parameter('shutdown_duration_sec', 0.6)
+        self.declare_parameter('stop_servo_ids', [1, 2, 3, 4, 5, 10])
         self.declare_parameter('min_score', 0.45)
         self.declare_parameter('near_iou_threshold', 0.05)
         self.declare_parameter('near_center_distance_px', 170)
@@ -85,6 +91,8 @@ class DangerScanNode(Node):
         self.declare_parameter('smoke_classes', ['smoke'])
 
         self.image_lock = threading.Lock()
+        self.motion_lock = threading.Lock()
+        self.shutdown_lock = threading.Lock()
         self.latest_image = None
         self.latest_stamp = 0.0
         self.model = None
@@ -92,6 +100,8 @@ class DangerScanNode(Node):
         self.stride = 32
         self.names = {}
         self.running = True
+        self.shutdown_done = False
+        self.shutdown_requested = False
         self.yaw = 500
         self.z = float(self.get_parameter('initial_z').value)
         self.x = transform.link3 + transform.tool_link + float(self.get_parameter('x_offset').value)
@@ -99,16 +109,28 @@ class DangerScanNode(Node):
 
         os.makedirs(self.get_parameter('save_dir').value, exist_ok=True)
         self.servo_pub = self.create_publisher(ServosPosition, self.get_parameter('servo_topic').value, 1)
+        self.bus_servo_state_pub = self.create_publisher(
+            SetBusServoState,
+            self.get_parameter('bus_servo_state_topic').value,
+            1,
+        )
         self.cmd_pub = self.create_publisher(Twist, self.get_parameter('cmd_vel_topic').value, 1)
         self.status_pub = self.create_publisher(String, self.get_parameter('status_topic').value, 10)
         self.kinematics_client = self.create_client(SetRobotPose, self.get_parameter('kinematics_service').value)
         self.create_subscription(Image, self.get_parameter('image_topic').value, self.image_callback, 1)
+        self.create_subscription(
+            String,
+            self.get_parameter('shutdown_command_topic').value,
+            self.shutdown_command_callback,
+            10,
+        )
 
         self.wait_for_kinematics()
         self.load_model()
         self.worker = threading.Thread(target=self.scan_loop, daemon=True)
         self.worker.start()
         self.get_logger().info('danger_scan_node started')
+        self.get_logger().info('publish "stop" to /full_auto_rover/shutdown_command to return the arm and stop servos')
 
     def wait_for_kinematics(self):
         while rclpy.ok() and not self.kinematics_client.wait_for_service(timeout_sec=1.0):
@@ -185,6 +207,23 @@ class DangerScanNode(Node):
                     break
                 self.scan_once(scan_yaw)
                 time.sleep(float(self.get_parameter('loop_pause_sec').value))
+
+    def shutdown_command_callback(self, msg):
+        command = msg.data.strip().lower()
+        if command in ('q', 'quit', 'exit', 'stop', 'shutdown'):
+            self.get_logger().info('shutdown command received: %s' % command)
+            self.request_shutdown()
+
+    def request_shutdown(self):
+        if self.shutdown_requested:
+            return
+        self.shutdown_requested = True
+        threading.Thread(target=self.shutdown_then_stop_ros, daemon=True).start()
+
+    def shutdown_then_stop_ros(self):
+        self.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
     def scan_once(self, scan_yaw):
         scan_z = float(self.get_parameter('initial_z').value)
@@ -266,36 +305,37 @@ class DangerScanNode(Node):
         return current_image, current_event
 
     def move_camera(self, yaw, z, duration):
-        self.yaw = int(clamp(yaw, int(self.get_parameter('min_yaw').value), int(self.get_parameter('max_yaw').value)))
-        self.z = float(clamp(z, float(self.get_parameter('min_z').value), float(self.get_parameter('max_z').value)))
-        request = set_pose_target(
-            [self.x, self.y, self.z],
-            float(self.get_parameter('target_pitch').value),
-            [float(value) for value in self.get_parameter('pitch_range').value],
-            float(self.get_parameter('pitch_resolution').value),
-        )
-        future = self.kinematics_client.call_async(request)
-        deadline = time.time() + 0.25
-        while rclpy.ok() and not future.done() and time.time() < deadline:
-            time.sleep(0.005)
+        with self.motion_lock:
+            self.yaw = int(clamp(yaw, int(self.get_parameter('min_yaw').value), int(self.get_parameter('max_yaw').value)))
+            self.z = float(clamp(z, float(self.get_parameter('min_z').value), float(self.get_parameter('max_z').value)))
+            request = set_pose_target(
+                [self.x, self.y, self.z],
+                float(self.get_parameter('target_pitch').value),
+                [float(value) for value in self.get_parameter('pitch_range').value],
+                float(self.get_parameter('pitch_resolution').value),
+            )
+            future = self.kinematics_client.call_async(request)
+            deadline = time.time() + 0.25
+            while rclpy.ok() and not future.done() and time.time() < deadline:
+                time.sleep(0.005)
 
-        if future.done() and future.result() is not None and future.result().pulse:
-            servo_data = future.result().pulse
-            positions = []
-            if bool(self.get_parameter('publish_gripper_servo').value):
-                positions.append((10, int(self.get_parameter('gripper_servo_position').value)))
-            if bool(self.get_parameter('publish_wrist_servo').value):
-                positions.append((5, int(self.get_parameter('wrist_servo_position').value)))
-            positions.extend([
-                (4, servo_data[3]),
-                (3, servo_data[2]),
-                (2, servo_data[1]),
-                (1, self.yaw),
-            ])
-        else:
-            positions = [(1, self.yaw)]
-            self.get_logger().warn('kinematics unavailable; publishing yaw only')
-        set_servo_position(self.servo_pub, duration, positions)
+            if future.done() and future.result() is not None and future.result().pulse:
+                servo_data = future.result().pulse
+                positions = []
+                if bool(self.get_parameter('publish_gripper_servo').value):
+                    positions.append((10, int(self.get_parameter('gripper_servo_position').value)))
+                if bool(self.get_parameter('publish_wrist_servo').value):
+                    positions.append((5, int(self.get_parameter('wrist_servo_position').value)))
+                positions.extend([
+                    (4, servo_data[3]),
+                    (3, servo_data[2]),
+                    (2, servo_data[1]),
+                    (1, self.yaw),
+                ])
+            else:
+                positions = [(1, self.yaw)]
+                self.get_logger().warn('kinematics unavailable; publishing yaw only')
+            set_servo_position(self.servo_pub, duration, positions)
 
     def detect(self, image):
         import torch
@@ -441,11 +481,35 @@ class DangerScanNode(Node):
         self.cmd_pub.publish(Twist())
 
     def shutdown(self):
-        self.running = False
-        for _ in range(5):
-            self.stop_base()
+        with self.shutdown_lock:
+            if self.shutdown_done:
+                return
+            self.shutdown_done = True
+            self.running = False
+            for _ in range(5):
+                self.stop_base()
+                time.sleep(0.03)
+            if rclpy.ok():
+                self.move_camera(
+                    int(self.get_parameter('shutdown_yaw').value),
+                    float(self.get_parameter('shutdown_z').value),
+                    float(self.get_parameter('shutdown_duration_sec').value),
+                )
+                time.sleep(float(self.get_parameter('shutdown_duration_sec').value) + 0.1)
+                self.stop_arm_servos()
+                self.publish_status('stopped')
+
+    def stop_arm_servos(self):
+        msg = SetBusServoState()
+        msg.duration = 0.0
+        for servo_id in [int(value) for value in self.get_parameter('stop_servo_ids').value]:
+            state = BusServoState()
+            state.present_id = [1, servo_id]
+            state.stop = [1]
+            msg.state.append(state)
+        for _ in range(3):
+            self.bus_servo_state_pub.publish(msg)
             time.sleep(0.03)
-        self.publish_status('stopped')
 
     def publish_status(self, status):
         msg = String()

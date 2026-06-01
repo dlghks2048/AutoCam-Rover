@@ -64,6 +64,10 @@ class DangerScanNode(Node):
         self.declare_parameter('max_yaw_step', 45)
         self.declare_parameter('max_z_step', 0.012)
         self.declare_parameter('event_pause_sec', 0.5)
+        self.declare_parameter('publish_gripper_servo', False)
+        self.declare_parameter('publish_wrist_servo', False)
+        self.declare_parameter('gripper_servo_position', 500)
+        self.declare_parameter('wrist_servo_position', 500)
 
         self.declare_parameter('min_score', 0.45)
         self.declare_parameter('near_iou_threshold', 0.05)
@@ -277,16 +281,19 @@ class DangerScanNode(Node):
 
         if future.done() and future.result() is not None and future.result().pulse:
             servo_data = future.result().pulse
-            positions = (
-                (10, 500),
-                (5, 500),
+            positions = []
+            if bool(self.get_parameter('publish_gripper_servo').value):
+                positions.append((10, int(self.get_parameter('gripper_servo_position').value)))
+            if bool(self.get_parameter('publish_wrist_servo').value):
+                positions.append((5, int(self.get_parameter('wrist_servo_position').value)))
+            positions.extend([
                 (4, servo_data[3]),
                 (3, servo_data[2]),
                 (2, servo_data[1]),
                 (1, self.yaw),
-            )
+            ])
         else:
-            positions = ((1, self.yaw),)
+            positions = [(1, self.yaw)]
             self.get_logger().warn('kinematics unavailable; publishing yaw only')
         set_servo_position(self.servo_pub, duration, positions)
 
@@ -355,8 +362,6 @@ class DangerScanNode(Node):
             return 'smoke', smokes[0]['box']
         if weapons:
             return 'weapon_detected:%s' % normalized_class_name(weapons[0]['class_name']), weapons[0]['box']
-        if persons:
-            return 'person_detected', persons[0]['box']
         return None
 
     def by_class(self, detections, class_names):
@@ -435,6 +440,13 @@ class DangerScanNode(Node):
     def stop_base(self):
         self.cmd_pub.publish(Twist())
 
+    def shutdown(self):
+        self.running = False
+        for _ in range(5):
+            self.stop_base()
+            time.sleep(0.03)
+        self.publish_status('stopped')
+
     def publish_status(self, status):
         msg = String()
         msg.data = status
@@ -447,7 +459,7 @@ def main():
     try:
         rclpy.spin(node)
     finally:
-        node.running = False
+        node.shutdown()
         node.destroy_node()
         rclpy.shutdown()
 

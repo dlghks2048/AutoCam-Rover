@@ -20,9 +20,6 @@ def launch_setup(context):
         controller_path = '/home/ubuntu/ros2_ws/src/driver/controller'
         kinematics_path = '/home/ubuntu/ros2_ws/src/driver/kinematics'
 
-    event_config = os.path.join(full_auto_path, 'config/event_rules.yaml')
-    tracker_config = os.path.join(full_auto_path, 'config/camera_tracker.yaml')
-    control_config = os.path.join(full_auto_path, 'config/robot_control.yaml')
     scan_config = os.path.join(full_auto_path, 'config/danger_scan.yaml')
 
     nodes = []
@@ -38,63 +35,12 @@ def launch_setup(context):
         nodes.append(IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(peripherals_path, 'launch/depth_camera.launch.py'))))
 
-    start_arm_controller = LaunchConfiguration('start_arm_controller').perform(context).lower() == 'true'
-    legacy_pipeline = LaunchConfiguration('legacy_pipeline').perform(context).lower() == 'true'
-
-    if not legacy_pipeline:
-        nodes.append(Node(
-            package='full_auto_rover',
-            executable='danger_scan_node',
-            output='screen',
-            parameters=[scan_config],
-        ))
-        return nodes
-
-    nodes.extend([
-        Node(
-            package='full_auto_rover',
-            executable='yolo_object_detector',
-            output='screen',
-            parameters=[event_config],
-        ),
-        Node(
-            package='full_auto_rover',
-            executable='danger_event_detector',
-            output='screen',
-            parameters=[event_config],
-        ),
-        Node(
-            package='full_auto_rover',
-            executable='event_camera_tracker',
-            output='screen',
-            parameters=[tracker_config],
-        ),
-        Node(
-            package='full_auto_rover',
-            executable='snapshot_sender',
-            output='screen',
-            parameters=[tracker_config],
-        ),
-        Node(
-            package='full_auto_rover',
-            executable='motion_controller',
-            output='screen',
-            parameters=[control_config],
-        ),
-        Node(
-            package='full_auto_rover',
-            executable='mission_coordinator',
-            output='screen',
-            parameters=[control_config],
-        ),
-    ])
-    if start_arm_controller:
-        nodes.append(Node(
-            package='full_auto_rover',
-            executable='arm_controller',
-            output='screen',
-            parameters=[control_config],
-        ))
+    nodes.append(Node(
+        package='full_auto_rover',
+        executable='danger_scan_node',
+        output='screen',
+        parameters=[scan_config],
+    ))
     return nodes
 
 
@@ -103,7 +49,5 @@ def generate_launch_description():
         DeclareLaunchArgument('start_camera', default_value='true'),
         DeclareLaunchArgument('start_controller', default_value='true'),
         DeclareLaunchArgument('start_kinematics', default_value='true'),
-        DeclareLaunchArgument('start_arm_controller', default_value='false'),
-        DeclareLaunchArgument('legacy_pipeline', default_value='false'),
         OpaqueFunction(function=launch_setup),
     ])

@@ -37,6 +37,10 @@ danger_scan_node:
     max_yaw_step: 45
     max_z_step: 0.012
     event_pause_sec: 0.5
+    publish_gripper_servo: false
+    publish_wrist_servo: false
+    gripper_servo_position: 500
+    wrist_servo_position: 500
 
     min_score: 0.45
     near_iou_threshold: 0.05

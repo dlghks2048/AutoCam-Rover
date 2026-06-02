@@ -26,6 +26,7 @@ setup(
     entry_points={
         'console_scripts': [
             'integrated_auto_rover_node = final_compilation.integrated_auto_rover_node:main',
+            'snapshot_uploader_node = final_compilation.snapshot_uploader_node:main',
         ],
     },
 )

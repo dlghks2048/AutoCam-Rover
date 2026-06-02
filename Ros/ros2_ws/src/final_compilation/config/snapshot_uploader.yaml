@@ -1,0 +1,7 @@
+snapshot_uploader_node:
+  ros__parameters:
+    server_url: http://192.168.0.10:5000
+    status_topic: /final_compilation/scan_status
+    odom_topic: /odom_raw
+    request_timeout_sec: 5.0
+    enabled: true

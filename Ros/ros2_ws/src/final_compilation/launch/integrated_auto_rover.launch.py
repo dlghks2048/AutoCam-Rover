@@ -22,6 +22,7 @@ def launch_setup(context):
         kinematics_path = '/home/ubuntu/ros2_ws/src/driver/kinematics'
 
     config = os.path.join(final_path, 'config/integrated_auto_rover.yaml')
+    uploader_config = os.path.join(final_path, 'config/snapshot_uploader.yaml')
     nodes = []
 
     if LaunchConfiguration('start_controller').perform(context).lower() == 'true':
@@ -42,6 +43,13 @@ def launch_setup(context):
         output='screen',
         parameters=[config],
     ))
+    if LaunchConfiguration('start_snapshot_uploader').perform(context).lower() == 'true':
+        nodes.append(Node(
+            package='final_compilation',
+            executable='snapshot_uploader_node',
+            output='screen',
+            parameters=[uploader_config],
+        ))
     return nodes
 
 
@@ -50,5 +58,6 @@ def generate_launch_description():
         DeclareLaunchArgument('start_camera', default_value='true'),
         DeclareLaunchArgument('start_controller', default_value='true'),
         DeclareLaunchArgument('start_kinematics', default_value='true'),
+        DeclareLaunchArgument('start_snapshot_uploader', default_value='true'),
         OpaqueFunction(function=launch_setup),
     ])

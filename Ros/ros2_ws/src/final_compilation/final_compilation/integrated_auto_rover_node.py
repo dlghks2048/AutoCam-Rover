@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 import math
+import json
 
 import cv2
 import numpy as np
@@ -507,6 +508,14 @@ class DangerScanNode(Node):
         path = os.path.join(self.get_parameter('save_dir').value, filename)
         cv2.imwrite(path, image)
         self.publish_status('saved:%s' % path)
+        self.publish_status('snapshot:%s' % json.dumps({
+            'path': path,
+            'event_type': label,
+            'scan_yaw': scan_yaw,
+            'camera_yaw': self.yaw,
+            'camera_z': self.z,
+            'captured_at': time.strftime('%Y-%m-%dT%H:%M:%S'),
+        }, ensure_ascii=False))
         self.get_logger().info('saved event snapshot: %s' % path)
 
     def stop_base(self):

@@ -1,9 +1,0 @@
-danger_event_detector:
-  ros__parameters:
-    object_topic: /yolov5/object_detect
-    event_center_topic: /full_auto_rover/event_center
-    event_status_topic: /full_auto_rover/event_status
-    image_width: 640
-    image_height: 480
-    min_score: 0.45
-    near_iou_threshold: 0.05

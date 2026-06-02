@@ -1,21 +1,22 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>full_auto_rover</name>
+  <name>final_compilation</name>
   <version>0.0.0</version>
-  <description>Autonomous event detection, camera alignment, and snapshot pipeline for AutoCam Rover.</description>
+  <description>Integrated autonomous driving, object detection, arm alignment, and snapshot pipeline for AutoCam Rover.</description>
   <maintainer email="user@example.com">user</maintainer>
   <license>TODO: License declaration</license>
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
-  <exec_depend>interfaces</exec_depend>
+  <exec_depend>python3-requests</exec_depend>
   <exec_depend>kinematics</exec_depend>
   <exec_depend>kinematics_msgs</exec_depend>
-  <exec_depend>servo_controller_msgs</exec_depend>
   <exec_depend>servo_controller</exec_depend>
+  <exec_depend>servo_controller_msgs</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

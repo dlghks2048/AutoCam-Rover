@@ -1,0 +1,61 @@
+danger_scan_node:
+  ros__parameters:
+    image_topic: /depth_cam/rgb/image_raw
+    servo_topic: /servo_controller
+    bus_servo_state_topic: /ros_robot_controller/bus_servo/set_state
+    cmd_vel_topic: /controller/cmd_vel
+    kinematics_service: /kinematics/set_pose_target
+    status_topic: /full_auto_rover/scan_status
+    shutdown_command_topic: /full_auto_rover/shutdown_command
+    save_dir: /home/ubuntu/ros2_ws/src/full_Auto_Rover/saved_images
+
+    yolov5_dir: /home/ubuntu/third_party_ros2/yolov5
+    model_path: /home/ubuntu/third_party_ros2/yolov5/yolov5n.pt
+    device: cpu
+    image_size: 320
+    conf_threshold: 0.35
+    iou_threshold: 0.45
+    max_detections: 10
+
+    scan_yaw_positions: [200, 286, 371, 457, 543, 629, 714, 800]
+    initial_z: 0.41
+    min_yaw: 200
+    max_yaw: 800
+    min_z: 0.36
+    max_z: 0.46
+    x_offset: 0.0
+    y_offset: 0.0
+    target_pitch: 0.0
+    pitch_range: [-180.0, 180.0]
+    pitch_resolution: 1.0
+    move_duration_sec: 0.45
+    settle_sec: 0.45
+    loop_pause_sec: 0.1
+
+    center_tolerance_px: 40
+    max_refine_steps: 3
+    yaw_gain: 0.04
+    z_gain: 0.00005
+    max_yaw_step: 45
+    max_z_step: 0.012
+    event_pause_sec: 0.5
+    publish_gripper_servo: false
+    publish_wrist_servo: false
+    gripper_servo_position: 500
+    wrist_servo_position: 500
+    shutdown_yaw: 500
+    shutdown_z: 0.41
+    shutdown_duration_sec: 0.6
+    stop_servo_ids: [1, 2, 3, 4, 5, 10]
+
+    min_score: 0.45
+    near_iou_threshold: 0.05
+    near_center_distance_px: 170
+    person_object_margin_px: 45
+    obstacle_center_band_ratio: 0.45
+    obstacle_min_area_ratio: 0.08
+    fallen_person_aspect_ratio: 1.35
+    weapon_classes: ['knife', 'scissors', 'baseball_bat']
+    obstacle_classes: ['chair', 'bench', 'couch', 'dining_table', 'backpack', 'handbag', 'suitcase', 'bottle', 'potted_plant', 'traffic_cone']
+    fire_classes: ['fire', 'flame']
+    smoke_classes: ['smoke']

@@ -2,7 +2,9 @@ import os
 from glob import glob
 from setuptools import find_packages, setup
 
-package_name = 'full_auto_rover'
+
+package_name = 'final_compilation'
+
 
 setup(
     name=package_name,
@@ -18,12 +20,13 @@ setup(
     zip_safe=True,
     maintainer='user',
     maintainer_email='user@example.com',
-    description='Autonomous event detection and camera alignment pipeline for AutoCam Rover.',
+    description='Integrated autonomous driving and event snapshot node for AutoCam Rover.',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'danger_scan_node = full_auto_rover.danger_scan_node:main',
+            'integrated_auto_rover_node = final_compilation.integrated_auto_rover_node:main',
+            'snapshot_uploader_node = final_compilation.snapshot_uploader_node:main',
         ],
     },
 )

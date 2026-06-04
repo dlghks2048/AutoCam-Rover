@@ -17,6 +17,7 @@ import sqlite3
 import time
 import logging
 import threading
+import os
 import numpy as np
 import cv2
 from dataclasses import dataclass
@@ -32,7 +33,12 @@ log = logging.getLogger(__name__)
 HOST               = "0.0.0.0"
 PORT               = 5000
 SAVE_DIR           = Path("received_images")
-DB_PATH            = Path(r"C:\Users\USER\OneDrive\Desktop\AutoCam_Rover_DB_API\autocam_rover.db")
+DB_PATH            = Path(
+    os.environ.get(
+        "AUTOCAM_DB_PATH",
+        Path.home() / "OneDrive" / "Desktop" / "AutoCam_Rover_DB_API" / "autocam_rover.db",
+    )
+)
 MAX_CONTENT        = 10 * 1024 * 1024
 DB_RECONNECT_DELAY = 2   # DB 재연결 대기(초)
 DB_RECONNECT_TRIES = 3   # DB 재연결 최대 시도 횟수
@@ -48,6 +54,16 @@ def _reconnect_db(old_conn: sqlite3.Connection, db_path: str, label: str) -> sql
     log.warning("[%s] DB 연결 끊김 — %ds 후 재연결 시도 (%s)", label, DB_RECONNECT_DELAY, db_path)
     time.sleep(DB_RECONNECT_DELAY)
     return sqlite3.connect(db_path)
+
+
+def _open_db(label: str) -> sqlite3.Connection:
+    """Configured DB를 열고, 경로 문제를 명확한 로그로 남긴다."""
+    db_path = str(DB_PATH)
+    try:
+        return sqlite3.connect(db_path)
+    except sqlite3.Error:
+        log.error("[%s] DB 열기 실패: %s", label, Path(db_path).resolve())
+        raise
 
 
 # ── 데이터 클래스 ────────────────────────────────────────────────────────────
@@ -166,7 +182,7 @@ def _init_event_counter() -> None:
     global _event_counter
     last_id = 0
     try:
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = _open_db("counter")
         try:
             row = conn.execute("SELECT COALESCE(MAX(event_id), 0) FROM event_logs").fetchone()
             last_id = int(row[0] or 0)
@@ -226,7 +242,7 @@ def _sse_push(record: dict, event_name: str | None = None) -> None:
 def _db_worker() -> None:
     """db_queue 에서 프레임을 꺼내 이미지 저장 후 index.jsonl 기록 + autocam_rover.db 삽입."""
     db_path = str(DB_PATH)
-    conn    = sqlite3.connect(db_path)
+    conn    = _open_db("db")
     while True:
         frame = db_queue.get()
         if frame is None:
@@ -375,7 +391,7 @@ def _save_analysis(record: AnalysisRecord) -> None:
 def _analysis_worker() -> None:
     """analysis_queue 에서 프레임을 꺼내 YOLO 추론 후 analysis.jsonl 기록 + autocam_rover.db 삽입."""
     db_path = str(DB_PATH)
-    conn    = sqlite3.connect(db_path)
+    conn    = _open_db("analysis")
     while True:
         frame = analysis_queue.get()
         if frame is None:
@@ -790,10 +806,12 @@ if __name__ == "__main__":
     parser.add_argument("--host",     default=HOST,           help="바인딩할 호스트")
     parser.add_argument("--port",     type=int, default=PORT,  help="포트 번호")
     parser.add_argument("--save-dir", default=str(SAVE_DIR),   help="이미지 저장 폴더")
+    parser.add_argument("--db-path",  default=str(DB_PATH),    help="autocam_rover.db 경로")
     parser.add_argument("--verbose",  action="store_true",     help="디버그 로그")
     args = parser.parse_args()
 
     SAVE_DIR = Path(args.save_dir)
+    DB_PATH  = Path(args.db_path)
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -802,6 +820,7 @@ if __name__ == "__main__":
 
     log.info("서버 시작 → http://%s:%d", args.host, args.port)
     log.info("이미지 저장 경로: %s", SAVE_DIR.resolve())
+    log.info("DB 경로: %s", DB_PATH.resolve())
     log.info("라이브 뷰어: http://localhost:%d/", args.port)
 
     app.run(host=args.host, port=args.port, threaded=True)

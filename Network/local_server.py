@@ -28,10 +28,14 @@ from flask import Flask, request, jsonify, Response, render_template_string
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)
 
+# 요청 액세스 로그 끄기 — 실제 경고/에러(WARNING 이상)는 그대로 남김
+logging.getLogger("werkzeug").setLevel(logging.WARNING)
+
 # ── 설정 ──────────────────────────────────────────────────────────────────────
 HOST               = "0.0.0.0"
 PORT               = 5000
 SAVE_DIR           = Path("received_images")
+DB_PATH            = Path(__file__).parent / "autocam_rover.db"
 MAX_CONTENT        = 10 * 1024 * 1024
 DB_RECONNECT_DELAY = 2   # DB 재연결 대기(초)
 DB_RECONNECT_TRIES = 3   # DB 재연결 최대 시도 횟수
@@ -133,8 +137,9 @@ _ALL_QUEUES: list[FrameQueue] = [gui_queue, db_queue, analysis_queue]
 
 # ── 팬아웃 디스패처 ───────────────────────────────────────────────────────────
 def dispatch(frame: Frame) -> None:
-    """업로드된 프레임을 모든 소비자 큐에 동시 전달. 각 큐의 드롭 정책은 독립적."""
-    for q in _ALL_QUEUES:
+    is_stream = frame.event_type == "stream"
+    
+    for q in ([gui_queue] if is_stream else _ALL_QUEUES):
         if not q.put(frame):
             log.debug("[%s] 큐 포화 — 프레임 드롭 (누적: %d)", q.name, q.dropped)
 
@@ -214,8 +219,8 @@ def _sse_push(record: dict, event_name: str | None = None) -> None:
 
 # DB 워커 ───────────────────────────────────────────────────────────────────
 def _db_worker() -> None:
-    """db_queue 에서 프레임을 꺼내 이미지 저장 후 index.jsonl 기록 + event_logs.db 삽입."""
-    db_path = str(SAVE_DIR / "event_logs.db")
+    """db_queue 에서 프레임을 꺼내 이미지 저장 후 index.jsonl 기록 + autocam_rover.db 삽입."""
+    db_path = str(DB_PATH)
     conn    = sqlite3.connect(db_path)
     while True:
         frame = db_queue.get()
@@ -245,7 +250,7 @@ def _db_worker() -> None:
             for attempt in range(DB_RECONNECT_TRIES):
                 try:
                     conn.execute(
-                        "INSERT INTO events "
+                        "INSERT INTO event_logs "
                         "(captured_at, received_at, robot_location, event_type, image_path) "
                         "VALUES (?, ?, ?, ?, ?)",
                         params,
@@ -359,8 +364,8 @@ def _save_analysis(record: AnalysisRecord) -> None:
 
 # 분석 워커 ──────────────────────────────────────────────────────────────────
 def _analysis_worker() -> None:
-    """analysis_queue 에서 프레임을 꺼내 YOLO 추론 후 analysis.jsonl 기록 + analysis_results.db 삽입."""
-    db_path = str(SAVE_DIR / "analysis_results.db")
+    """analysis_queue 에서 프레임을 꺼내 YOLO 추론 후 analysis.jsonl 기록 + autocam_rover.db 삽입."""
+    db_path = str(DB_PATH)
     conn    = sqlite3.connect(db_path)
     while True:
         frame = analysis_queue.get()
@@ -609,10 +614,11 @@ def upload():
     except ValueError:
         loc_x, loc_y = 0.0, 0.0                               # 기본값: 0, 0
 
+    event_id=_next_event_id()
     frame = Frame(
         data=data,
-        event_id=_next_event_id(),
-        filename=f"{ts}_{frame.event_id}.jpg",
+        event_id=event_id,
+        filename=f"{ts}_{event_id}.jpg",
         captured_at=captured_at,
         timestamp=received_at,
         event_type=event_type,
@@ -761,6 +767,36 @@ def status():
     ), 200
 
 
+# ── 로컬 디스플레이 ───────────────────────────────────────────────────────────
+
+def _display_loop(window_name: str = "JetRover Live") -> None:
+    """
+    메인 스레드에서 수신된 최신 프레임을 cv2.imshow() 로 실시간 표시.
+    'q' 또는 ESC 로 서버 전체 종료.
+    cv2.imshow() 는 Windows 에서 메인 스레드에서만 안정적으로 동작하므로
+    Flask 를 백그라운드 스레드로 실행한 뒤 이 함수를 메인 스레드에서 호출한다.
+    """
+    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+    log.info("로컬 디스플레이 시작 — 'q' 또는 ESC 로 종료")
+
+    while True:
+        with _latest_lock:
+            raw = _latest_frame
+
+        if raw:
+            nparr = np.frombuffer(raw, dtype=np.uint8)
+            img   = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            if img is not None:
+                cv2.imshow(window_name, img)
+
+        key = cv2.waitKey(30) & 0xFF
+        if key in (ord("q"), 27):   # q 또는 ESC
+            log.info("디스플레이 창 종료 요청 — 서버를 내립니다")
+            break
+
+    cv2.destroyAllWindows()
+
+
 # ── 진입점 ────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import argparse
@@ -769,6 +805,7 @@ if __name__ == "__main__":
     parser.add_argument("--host",     default=HOST,           help="바인딩할 호스트")
     parser.add_argument("--port",     type=int, default=PORT,  help="포트 번호")
     parser.add_argument("--save-dir", default=str(SAVE_DIR),   help="이미지 저장 폴더")
+    parser.add_argument("--display",  action="store_true",     help="수신 영상을 로컬 창으로 실시간 표시")
     parser.add_argument("--verbose",  action="store_true",     help="디버그 로그")
     args = parser.parse_args()
 
@@ -783,4 +820,14 @@ if __name__ == "__main__":
     log.info("이미지 저장 경로: %s", SAVE_DIR.resolve())
     log.info("라이브 뷰어: http://localhost:%d/", args.port)
 
-    app.run(host=args.host, port=args.port, threaded=True)
+    if args.display:
+        # Flask 를 백그라운드 스레드로 실행하고, 메인 스레드에서 디스플레이 루프 구동
+        flask_thread = threading.Thread(
+            target=lambda: app.run(host=args.host, port=args.port, threaded=True),
+            name="flask",
+            daemon=True,
+        )
+        flask_thread.start()
+        _display_loop()
+    else:
+        app.run(host=args.host, port=args.port, threaded=True)

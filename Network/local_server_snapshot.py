@@ -32,6 +32,7 @@ log = logging.getLogger(__name__)
 HOST               = "0.0.0.0"
 PORT               = 5000
 SAVE_DIR           = Path("received_images")
+DB_PATH            = Path(r"C:\Users\USER\OneDrive\Desktop\AutoCam_Rover_DB_API\autocam_rover.db")
 MAX_CONTENT        = 10 * 1024 * 1024
 DB_RECONNECT_DELAY = 2   # DB 재연결 대기(초)
 DB_RECONNECT_TRIES = 3   # DB 재연결 최대 시도 횟수
@@ -161,23 +162,32 @@ _event_counter      = 0
 _event_counter_lock = threading.Lock()
 
 def _init_event_counter() -> None:
-    """서버 재시작 시 index.jsonl 의 마지막 event_id 를 읽어 이어받음."""
+    """서버 재시작 시 DB/index.jsonl 의 마지막 event_id 를 읽어 이어받음."""
     global _event_counter
-    index_path = SAVE_DIR / "index.jsonl"
-    if not index_path.exists():
-        return
     last_id = 0
-    with index_path.open(encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                eid = int(json.loads(line).get("event_id", 0))
-                if eid > last_id:
-                    last_id = eid
-            except (json.JSONDecodeError, ValueError, TypeError):
-                pass
+    try:
+        conn = sqlite3.connect(str(DB_PATH))
+        try:
+            row = conn.execute("SELECT COALESCE(MAX(event_id), 0) FROM event_logs").fetchone()
+            last_id = int(row[0] or 0)
+        finally:
+            conn.close()
+    except sqlite3.Error as exc:
+        log.warning("event_id DB 카운터 조회 실패: %s", exc)
+
+    index_path = SAVE_DIR / "index.jsonl"
+    if index_path.exists():
+        with index_path.open(encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    eid = int(json.loads(line).get("event_id", 0))
+                    if eid > last_id:
+                        last_id = eid
+                except (json.JSONDecodeError, ValueError, TypeError):
+                    pass
     _event_counter = last_id
     log.info("event_id 카운터 초기화: %d 에서 재개", _event_counter)
 
@@ -214,8 +224,8 @@ def _sse_push(record: dict, event_name: str | None = None) -> None:
 
 # DB 워커 ───────────────────────────────────────────────────────────────────
 def _db_worker() -> None:
-    """db_queue 에서 프레임을 꺼내 이미지 저장 후 index.jsonl 기록 + event_logs.db 삽입."""
-    db_path = str(SAVE_DIR / "event_logs.db")
+    """db_queue 에서 프레임을 꺼내 이미지 저장 후 index.jsonl 기록 + autocam_rover.db 삽입."""
+    db_path = str(DB_PATH)
     conn    = sqlite3.connect(db_path)
     while True:
         frame = db_queue.get()
@@ -237,18 +247,22 @@ def _db_worker() -> None:
             with index_path.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
             params = (
-                frame.captured_at, frame.timestamp,
+                frame.event_id, frame.captured_at, frame.timestamp,
                 json.dumps(loc, ensure_ascii=False),
                 frame.event_type, str(img_path),
             )
             db_ok = False
             for attempt in range(DB_RECONNECT_TRIES):
                 try:
+                    analysis_done = conn.execute(
+                        "SELECT 1 FROM analysis_results WHERE event_id = ? LIMIT 1",
+                        (frame.event_id,),
+                    ).fetchone() is not None
                     conn.execute(
-                        "INSERT INTO events "
-                        "(captured_at, received_at, robot_location, event_type, image_path) "
-                        "VALUES (?, ?, ?, ?, ?)",
-                        params,
+                        "INSERT INTO event_logs "
+                        "(event_id, captured_at, received_at, robot_location, event_type, image_path, analysis_status) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        (*params, "completed" if analysis_done else "pending"),
                     )
                     conn.commit()
                     db_ok = True
@@ -359,8 +373,8 @@ def _save_analysis(record: AnalysisRecord) -> None:
 
 # 분석 워커 ──────────────────────────────────────────────────────────────────
 def _analysis_worker() -> None:
-    """analysis_queue 에서 프레임을 꺼내 YOLO 추론 후 analysis.jsonl 기록 + analysis_results.db 삽입."""
-    db_path = str(SAVE_DIR / "analysis_results.db")
+    """analysis_queue 에서 프레임을 꺼내 YOLO 추론 후 analysis.jsonl 기록 + autocam_rover.db 삽입."""
+    db_path = str(DB_PATH)
     conn    = sqlite3.connect(db_path)
     while True:
         frame = analysis_queue.get()
@@ -375,6 +389,7 @@ def _analysis_worker() -> None:
             record = _run_analysis(frame.event_id, img)
             _save_analysis(record)
             params = (
+                record.event_id,
                 int(record.person_detected), int(record.fallen_object_detected),
                 int(record.obstacle_detected), int(record.motion_detected),
                 record.risk_level, record.result_summary, record.analyzed_at,
@@ -384,10 +399,15 @@ def _analysis_worker() -> None:
                 try:
                     conn.execute(
                         "INSERT INTO analysis_results "
-                        "(person_detected, fallen_object_detected, obstacle_detected, "
+                        "(event_id, person_detected, fallen_object_detected, obstacle_detected, "
                         "motion_detected, risk_level, result_summary, analyzed_at) "
-                        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                         params,
+                    )
+                    conn.commit()
+                    conn.execute(
+                        "UPDATE event_logs SET analysis_status = ? WHERE event_id = ?",
+                        ("completed", record.event_id),
                     )
                     conn.commit()
                     db_ok = True

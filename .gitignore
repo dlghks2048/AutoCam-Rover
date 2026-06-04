@@ -1,0 +1,6 @@
+*.jpg
+Network/received_images/analysis.jsonl
+Network/received_images/analysis_results.db
+Network/received_images/event_logs.db
+Network/received_images/index.jsonl
+Network/yolov8n.pt
